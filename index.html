@@ -1994,11 +1994,12 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         return "HM-" + result;
     }
     
-    function getDownloadFilename(extension = '') {
+    function getDownloadFilename() {
         const projectName = projectNameInput && projectNameInput.value.trim() ? projectNameInput.value.trim() : '';
         const uniqueId = currentFileID || generateUniqueID();
-        const filename = projectName ? `${projectName}_${uniqueId}` : uniqueId;
-        return extension ? `${filename}.${extension}` : filename;
+        // Sanitize project name for filename (remove invalid characters)
+        const sanitizedName = projectName.replace(/[^a-z0-9_-]/gi, '_').substring(0, 50);
+        return sanitizedName ? `${sanitizedName}_${uniqueId}` : uniqueId;
     }
 
     // Initialize
