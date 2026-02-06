@@ -556,7 +556,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HoleMapper - Perforated Panel Designer</title>
+    <title>Perforated panel Designer</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -1125,6 +1125,21 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             font-weight: 600;
         }
         
+        /* Footer Styles */
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--panel-bg);
+            border-top: 1px solid var(--border);
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #64748b;
+            z-index: 100;
+        }
+        
         /* Slider Styles */
         .slider-container {
             margin-top: 10px;
@@ -1384,7 +1399,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 
 <aside>
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h1 style="margin:0;">HoleMapper</h1>
+        <h1 style="margin:0;">Perforated panel Designer</h1>
         <button id="importBtn" class="btn-secondary btn-small" onclick="document.getElementById('importFile').click()">Import Settings</button>
         <input type="file" id="importFile" accept=".txt" style="display:none">
     </div>
@@ -2622,7 +2637,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         
         // Structured Text Content
         const content = 
-`HoleMapper Specification File
+`Perforated panel Designer Specification File
 -----------------------------
 Generated: ${now.toLocaleString()}
 FileID: ${filename}
@@ -3110,5 +3125,8 @@ OpenArea: ${document.getElementById('statArea').innerText}
     window.handleAdminLogin = handleAdminLogin;
 </script>
 
+<footer>
+    Designed by Ehsan Mokhtary
+</footer>
 
 </body></html>
