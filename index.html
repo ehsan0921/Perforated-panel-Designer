@@ -1757,6 +1757,13 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         </div>
         <small>Display opening percentage overlay on each subdivided panel</small>
     </div>
+    <div class="control-group">
+        <div class="toggle-group">
+            <label style="margin:0; flex:1;">Include Footer Statistics in Downloads</label>
+            <div class="toggle-switch" id="includeFooterStatsToggle"></div>
+        </div>
+        <small>Add panel count, hole count, and opening percentage below the image in downloaded files</small>
+    </div>
 
     <button id="generateBtn" class="btn-primary">Generate Pattern</button>
     
@@ -1850,6 +1857,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     // Alignment and Display Controls
     const alignmentButtons = document.querySelectorAll('.align-btn');
     const showPercentageToggle = document.getElementById('showPercentageToggle');
+    const includeFooterStatsToggle = document.getElementById('includeFooterStatsToggle');
     const percentageSizeSlider = document.getElementById('percentageSizeSlider');
     const percentageSizeValue = document.getElementById('percentageSizeValue');
     const percentageSizeContainer = document.getElementById('percentageSizeContainer');
@@ -1886,7 +1894,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     let panelAlignment = 'center'; // 'center', 'top-left', 'top', 'top-right', 'left', 'right', 'bottom-left', 'bottom', 'bottom-right'
     let showPercentage = false;
     let percentageSize = 100; // Percentage size multiplier (50-200%)
-    let panelStats = []; // Store stats per panel: [{sheetIndex, holeCount, openArea, bounds}] 
+    let panelStats = []; // Store stats per panel: [{sheetIndex, holeCount, openArea, bounds}]
+    let includeFooterStatsInDownload = false; // Include footer statistics in downloaded files 
 
     // --- LOCAL STORAGE ---
     function saveSettings() {
@@ -1914,7 +1923,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             lockMode: lockPitchRadio.checked ? 'pitch' : 'gap',
             panelAlignment: panelAlignment,
             showPercentage: showPercentage,
-            percentageSize: percentageSize
+            percentageSize: percentageSize,
+            includeFooterStatsInDownload: includeFooterStatsInDownload
         };
         localStorage.setItem('holemapper_settings_v3', JSON.stringify(settings));
     }
@@ -1974,6 +1984,13 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                     }
                     if (percentageSizeValue) {
                         percentageSizeValue.textContent = percentageSize + '%';
+                    }
+                }
+                
+                if(s.includeFooterStatsInDownload !== undefined) {
+                    includeFooterStatsInDownload = s.includeFooterStatsInDownload;
+                    if (includeFooterStatsToggle) {
+                        includeFooterStatsToggle.classList.toggle('active', includeFooterStatsInDownload);
                     }
                 }
                 
@@ -2167,6 +2184,15 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             }
             saveSettings();
             if (sourceImage) generatePerforation();
+        });
+    }
+    
+    // Include footer stats in download toggle
+    if (includeFooterStatsToggle) {
+        includeFooterStatsToggle.addEventListener('click', () => {
+            includeFooterStatsInDownload = !includeFooterStatsInDownload;
+            includeFooterStatsToggle.classList.toggle('active', includeFooterStatsInDownload);
+            saveSettings();
         });
     }
     
@@ -2710,11 +2736,27 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     }
 
     // --- EXPORT FUNCTIONS ---
+    
+    // Helper function to get footer statistics
+    function getFooterStatistics() {
+        const w = parseFloat(inputs.w.value);
+        const h = parseFloat(inputs.h.value);
+        const panels = sheetDefinitions.length;
+        const holes = generatedHoles.length;
+        // Calculate total hole area
+        let totalHoleArea = 0;
+        generatedHoles.forEach(h => {
+            totalHoleArea += Math.PI * Math.pow(h.r, 2);
+        });
+        const opening = ((totalHoleArea / (w * h)) * 100).toFixed(2) + "%";
+        return { panels, holes, opening };
+    }
 
     function downloadDXF() {
         if (generatedHoles.length === 0) return;
         const filename = getDownloadFilename();
         const totalH = parseFloat(inputs.h.value);
+        const totalW = parseFloat(inputs.w.value);
 
         // Minimal DXF R12 format - simplest possible for maximum compatibility
         let dxf = "";
@@ -2775,6 +2817,22 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                     dxf += "50\n0.0\n";
                 }
             });
+        }
+        
+        // Add footer statistics if enabled
+        if (includeFooterStatsInDownload) {
+            const stats = getFooterStatistics();
+            const footerY = totalH + 20; // Position below the design
+            const fontSize = 8.0;
+            const startX = totalW / 2 - 100; // Center the text
+            
+            dxf += "0\nTEXT\n8\n0\n";
+            dxf += "10\n" + startX.toFixed(3) + "\n";
+            dxf += "20\n" + footerY.toFixed(3) + "\n";
+            dxf += "30\n0.0\n";
+            dxf += "40\n" + fontSize.toFixed(1) + "\n";
+            dxf += "1\nPanels: " + stats.panels + " | Holes: " + stats.holes.toLocaleString() + " | Opening: " + stats.opening + "\n";
+            dxf += "50\n0.0\n";
         }
 
         dxf += "0\nENDSEC\n";
@@ -2844,11 +2902,18 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         if (!sourceImage) return;
         const filename = getDownloadFilename();
         
+        // Calculate footer height if needed
+        const footerHeight = includeFooterStatsInDownload ? 40 : 0;
+        
         // Create a temporary canvas to render with/without percentage
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = canvas.width;
-        tempCanvas.height = canvas.height;
+        tempCanvas.height = canvas.height + footerHeight;
         const tempCtx = tempCanvas.getContext('2d');
+        
+        // Fill background
+        tempCtx.fillStyle = '#ffffff';
+        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
         
         // Copy the main canvas
         tempCtx.drawImage(canvas, 0, 0);
@@ -2857,6 +2922,19 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         if (showPercentage) {
             const pixelScale = canvas.width / parseFloat(inputs.w.value);
             drawPercentageOverlay(tempCtx, pixelScale, true);
+        }
+        
+        // Add footer statistics if enabled
+        if (includeFooterStatsInDownload) {
+            const stats = getFooterStatistics();
+            tempCtx.save();
+            tempCtx.fillStyle = '#000000';
+            tempCtx.font = '14px sans-serif';
+            tempCtx.textAlign = 'center';
+            tempCtx.textBaseline = 'top';
+            const footerText = `Panels: ${stats.panels} | Holes: ${stats.holes.toLocaleString()} | Opening: ${stats.opening}`;
+            tempCtx.fillText(footerText, tempCanvas.width / 2, canvas.height + 10);
+            tempCtx.restore();
         }
         
         const imgLink = document.createElement('a');
@@ -2870,11 +2948,13 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const filename = getDownloadFilename();
         const totalH = parseFloat(inputs.h.value);
         const totalW = parseFloat(inputs.w.value);
+        const footerHeight = includeFooterStatsInDownload ? 20 : 0;
+        const svgHeight = totalH + footerHeight;
         
         let svg = '<?xml version="1.0" encoding="UTF-8"?>\n';
         svg += '<svg xmlns="http://www.w3.org/2000/svg" ';
-        svg += `width="${totalW}mm" height="${totalH}mm" `;
-        svg += `viewBox="0 0 ${totalW} ${totalH}">\n`;
+        svg += `width="${totalW}mm" height="${svgHeight}mm" `;
+        svg += `viewBox="0 0 ${totalW} ${svgHeight}">\n`;
         svg += '<g transform="translate(0,' + totalH + ') scale(1,-1)">\n'; // Flip Y axis
         
         // Draw panel boundaries
@@ -2906,7 +2986,16 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             svg += '</g>\n';
         }
         
-        svg += '</g>\n</svg>';
+        svg += '</g>\n';
+        
+        // Add footer statistics if enabled
+        if (includeFooterStatsInDownload) {
+            const stats = getFooterStatistics();
+            const footerY = totalH + 20; // Position below the design
+            svg += `<text x="${totalW / 2}" y="${footerY}" fill="#000000" font-family="Arial" font-size="8" text-anchor="middle">Panels: ${stats.panels} | Holes: ${stats.holes.toLocaleString()} | Opening: ${stats.opening}</text>\n`;
+        }
+        
+        svg += '</svg>';
         
         const blob = new Blob([svg], { type: 'image/svg+xml' });
         const link = document.createElement('a');
@@ -3996,17 +4085,17 @@ OpenArea: ${document.getElementById('statArea').innerText}
 </div> <!-- End main-wrapper -->
 
 <footer class="bg-white border-t border-gray-200 py-2 text-center text-sm text-gray-600">
-    <div style="display: flex; justify-content: space-around; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 20px;">
-        <div>
+    <div style="display: flex; justify-content: space-around; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 20px; gap: 40px;">
+        <div style="padding: 0 10px;">
             <strong>Panels:</strong> <span id="footerPanels">0</span>
         </div>
-        <div>
+        <div style="padding: 0 10px;">
             <strong>Holes:</strong> <span id="footerHoles">0</span>
         </div>
-        <div>
+        <div style="padding: 0 10px;">
             <strong>Opening:</strong> <span id="footerOpening">0%</span>
         </div>
-        <div style="margin-left: auto;">
+        <div style="margin-left: auto; padding: 0 10px;">
             Designed by Ehsan Mokhtary
         </div>
     </div>
