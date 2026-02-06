@@ -1341,12 +1341,6 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                             </svg>
                         </button>
-                        <button id="downloadHtmlBtn" onclick="handleDownloadClick('html');" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-3 hidden" disabled>
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.885 12.938 9 12.482 9 12c0-.482-.115-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
-                            </svg>
-                            <span class="font-medium flex-1">Shareable (.html)</span>
-                        </button>
                     </div>
                 </div>
                 
@@ -3023,189 +3017,6 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         link.click();
     }
 
-    function downloadHTML() {
-        if (!sourceImage) {
-            alert('No image to share. Please upload an image first.');
-            return;
-        }
-        
-        const filename = currentFileID || "perforation";
-        
-        // Get image as base64
-        const canvas = document.createElement('canvas');
-        canvas.width = sourceImage.width;
-        canvas.height = sourceImage.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(sourceImage, 0, 0);
-        const imageData = canvas.toDataURL('image/png');
-        
-        // Get all settings
-        const settings = {
-            w: inputs.w.value,
-            h: inputs.h.value,
-            pitch: inputs.pitch.value,
-            edge: inputs.edge.value,
-            min: inputs.min.value,
-            max: inputs.max.value,
-            invert: inputs.invert.checked,
-            splitW: inputs.splitW.value,
-            splitH: inputs.splitH.value,
-            mT: inputs.mT.value,
-            mB: inputs.mB.value,
-            mL: inputs.mL.value,
-            mR: inputs.mR.value,
-            imgFit: imgFitMode.value,
-            imgScale: inputs.imgScale.value,
-            imgPanX: inputs.imgPanX.value,
-            imgPanY: inputs.imgPanY.value,
-            splitMode: splitMode.value,
-            lockRatio: lockRatioCheckbox.checked,
-            lockMode: lockPitchRadio.checked ? 'pitch' : 'gap',
-            panelAlignment: panelAlignment,
-            showPercentage: showPercentage,
-            percentageSize: percentageSize
-        };
-        
-        // Create HTML content
-        const htmlContent = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perforated Panel Design - Shareable File</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-        }
-        .container {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            padding: 40px;
-            max-width: 500px;
-            width: 100%;
-            text-align: center;
-        }
-        .icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 40px;
-        }
-        h1 {
-            color: #1e293b;
-            margin-bottom: 10px;
-            font-size: 24px;
-        }
-        p {
-            color: #64748b;
-            margin-bottom: 30px;
-            line-height: 1.6;
-        }
-        .buttons {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-        }
-        button {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .btn-open {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .btn-open:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-        .btn-close {
-            background: #f1f5f9;
-            color: #475569;
-        }
-        .btn-close:hover {
-            background: #e2e8f0;
-        }
-        .preview {
-            margin-top: 30px;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .preview img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="icon">📐</div>
-        <h1>Perforated Panel Design</h1>
-        <p>This file contains a perforated panel design. Would you like to open it in the Perforated Panel Designer?</p>
-        <div class="buttons">
-            <button class="btn-open" onclick="openDesign()">Open in Designer</button>
-            <button class="btn-close" onclick="closeWindow()">Close</button>
-        </div>
-        <div class="preview">
-            <img src="${imageData}" alt="Design Preview">
-        </div>
-    </div>
-    
-    <script>
-        const designData = ${JSON.stringify({
-            image: imageData,
-            settings: settings
-        })};
-        
-        function openDesign() {
-            // Encode data as base64 to pass via URL
-            const dataStr = btoa(JSON.stringify(designData));
-            const url = 'https://ppd.ehsanmo.me/?shared=' + encodeURIComponent(dataStr);
-            window.location.href = url;
-        }
-        
-        function closeWindow() {
-            window.close();
-            // If window.close() doesn't work (some browsers), show a message
-            setTimeout(() => {
-                document.body.innerHTML = '<div class="container"><div class="icon">✓</div><h1>File Closed</h1><p>You can safely close this window.</p></div>';
-            }, 100);
-        }
-    </script>
-</body>
-</html>`;
-        
-        const blob = new Blob([htmlContent], { type: 'text/html' });
-        const link = document.createElement('a');
-        link.download = `${filename}_shareable.html`;
-        link.href = URL.createObjectURL(blob);
-        link.click();
-    }
-
     function downloadSpecs() {
         const filename = getDownloadFilename();
         const now = new Date();
@@ -4072,23 +3883,6 @@ OpenArea: ${document.getElementById('statArea').innerText}
             }
         }
         
-        // HTML Shareable Button - only for registered users
-        const htmlBtn = document.getElementById('downloadHtmlBtn');
-        if (htmlBtn) {
-            const canDownload = authManager.canDownload('html');
-            if (canDownload && authManager.currentUser) {
-                htmlBtn.classList.remove('hidden');
-                htmlBtn.disabled = !sourceImage;
-                if (htmlBtn.disabled) {
-                    htmlBtn.classList.add('opacity-60', 'cursor-not-allowed');
-                } else {
-                    htmlBtn.classList.remove('opacity-60', 'cursor-not-allowed');
-                    htmlBtn.classList.add('cursor-pointer');
-                }
-            } else {
-                htmlBtn.classList.add('hidden');
-            }
-        }
     }
     
     // Handle download button clicks with permission check
@@ -4107,8 +3901,6 @@ OpenArea: ${document.getElementById('statArea').innerText}
             window.downloadSVG();
         } else if (type === 'zip') {
             window.downloadZIP();
-        } else if (type === 'html') {
-            window.downloadHTML();
         }
         toggleDownloadsMenu(); // Close the dropdown after download
     }
@@ -4366,27 +4158,6 @@ OpenArea: ${document.getElementById('statArea').innerText}
             await originalDownloadZIP();
         } else {
             alert('No pattern to download. Please generate a pattern first.');
-        }
-    };
-    
-    const originalDownloadHTML = downloadHTML;
-    window.downloadHTML = async function() {
-        if (!authManager.canDownload('html')) {
-            alert('Please register/login to download shareable HTML files');
-            showAuthModal();
-            return;
-        }
-        if (!authManager.currentUser) {
-            alert('Please login to download shareable files');
-            showAuthModal();
-            return;
-        }
-        await authManager.trackDownload('html');
-        // Check if there's content to download
-        if (typeof originalDownloadHTML === 'function') {
-            originalDownloadHTML();
-        } else {
-            alert('No image to share. Please upload an image first.');
         }
     };
     
