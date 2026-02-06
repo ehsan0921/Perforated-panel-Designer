@@ -1299,13 +1299,13 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                     
                     <!-- Downloads Dropdown Menu -->
                     <div id="downloadsMenuDropdown" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50">
-                        <button id="downloadImgBtn" onclick="downloadImage(); toggleDownloadsMenu();" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-3" disabled>
+                        <button id="downloadImgBtn" onclick="window.downloadImage(); toggleDownloadsMenu();" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-3" disabled>
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                             </svg>
                             <span class="font-medium">Map (.png)</span>
                         </button>
-                        <button id="downloadTxtBtn" onclick="downloadSpecs(); toggleDownloadsMenu();" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-3" disabled>
+                        <button id="downloadTxtBtn" onclick="window.downloadSpecs(); toggleDownloadsMenu();" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-3" disabled>
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
@@ -2851,7 +2851,14 @@ OpenArea: ${document.getElementById('statArea').innerText}
     
     // Initialize Firebase
     if (typeof firebase !== 'undefined') {
-        firebase.initializeApp(firebaseConfig);
+        try {
+            firebase.initializeApp(firebaseConfig);
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+        }
+    } else {
+        console.error('Firebase SDK not loaded');
     }
     
     // Auth Manager
@@ -2936,21 +2943,81 @@ OpenArea: ${document.getElementById('statArea').innerText}
         
         async signInWithGoogle() {
             try {
+                if (!this.auth) {
+                    return { success: false, error: 'Firebase not initialized. Please refresh the page.' };
+                }
+                
                 const provider = new firebase.auth.GoogleAuthProvider();
+                // Add scopes if needed
+                provider.addScope('profile');
+                provider.addScope('email');
+                
+                // Set custom parameters
+                provider.setCustomParameters({
+                    prompt: 'select_account'
+                });
+                
                 const userCredential = await this.auth.signInWithPopup(provider);
-                const userDoc = await this.db.collection('users').doc(userCredential.user.uid).get();
-                if (!userDoc.exists) {
-                    await this.db.collection('users').doc(userCredential.user.uid).set({
-                        email: userCredential.user.email,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        isAdmin: false,
-                        downloadCount: 0
+                
+                // Try to update Firestore, but don't fail login if it doesn't work
+                try {
+                    if (this.db) {
+                        // Check if user document exists, create if not
+                        const userDoc = await this.db.collection('users').doc(userCredential.user.uid).get();
+                        if (!userDoc.exists) {
+                            await this.db.collection('users').doc(userCredential.user.uid).set({
+                                email: userCredential.user.email,
+                                displayName: userCredential.user.displayName || '',
+                                photoURL: userCredential.user.photoURL || '',
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                isAdmin: false,
+                                downloadCount: 0
+                            });
+                        } else {
+                            // Update last login
+                            await this.db.collection('users').doc(userCredential.user.uid).update({
+                                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        }
+                        
+                        // Track login (non-blocking)
+                        this.trackLogin().catch(err => {
+                            console.warn('Failed to track login:', err);
+                        });
+                    }
+                } catch (dbError) {
+                    // Log but don't fail - authentication succeeded
+                    console.warn('Firestore operation failed, but login succeeded:', dbError);
+                    
+                    // Provide helpful error message if it's a permissions issue
+                    if (dbError.code === 'permission-denied' || dbError.message.includes('permission')) {
+                        console.error('Firestore permission denied. Please check your Firestore security rules.');
+                        // Don't show alert to user - login still succeeded
+                    }
+                    
+                    // Try to track login in background
+                    this.trackLogin().catch(err => {
+                        console.warn('Failed to track login:', err);
                     });
                 }
-                await this.trackLogin();
+                
                 return { success: true };
             } catch (error) {
-                return { success: false, error: error.message };
+                console.error('Google sign-in error:', error);
+                let errorMessage = error.message;
+                
+                // Provide more helpful error messages
+                if (error.code === 'auth/popup-blocked') {
+                    errorMessage = 'Popup was blocked by your browser. Please allow popups for this site and try again.';
+                } else if (error.code === 'auth/popup-closed-by-user') {
+                    errorMessage = 'Sign-in popup was closed. Please try again.';
+                } else if (error.code === 'auth/unauthorized-domain') {
+                    errorMessage = 'This domain is not authorized for Google sign-in. Please contact support.';
+                } else if (error.code === 'auth/operation-not-allowed') {
+                    errorMessage = 'Google sign-in is not enabled. Please enable it in Firebase Console.';
+                }
+                
+                return { success: false, error: errorMessage };
             }
         },
         
@@ -2977,7 +3044,7 @@ OpenArea: ${document.getElementById('statArea').innerText}
         },
         
         async trackLogin() {
-            if (!this.currentUser) return;
+            if (!this.currentUser || !this.db) return;
             try {
                 await this.db.collection('loginLogs').add({
                     userId: this.currentUser.uid,
@@ -2985,12 +3052,13 @@ OpenArea: ${document.getElementById('statArea').innerText}
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
             } catch (e) {
-                console.error('Failed to track login:', e);
+                // Silently fail - don't block login if Firestore is unavailable
+                console.warn('Failed to track login (non-critical):', e.message);
             }
         },
         
         async trackDownload(fileType) {
-            if (!this.currentUser) return;
+            if (!this.currentUser || !this.db) return;
             try {
                 await this.db.collection('downloads').add({
                     userId: this.currentUser.uid,
@@ -3002,7 +3070,8 @@ OpenArea: ${document.getElementById('statArea').innerText}
                     downloadCount: firebase.firestore.FieldValue.increment(1)
                 });
             } catch (e) {
-                console.error('Failed to track download:', e);
+                // Silently fail - don't block downloads if Firestore is unavailable
+                console.warn('Failed to track download (non-critical):', e.message);
             }
         },
         
@@ -3389,7 +3458,12 @@ OpenArea: ${document.getElementById('statArea').innerText}
         if (authManager.currentUser) {
             await authManager.trackDownload('png');
         }
-        originalDownloadImage();
+        // Check if there's content to download
+        if (typeof originalDownloadImage === 'function') {
+            originalDownloadImage();
+        } else {
+            alert('No image to download. Please upload an image and generate the pattern first.');
+        }
     };
     
     const originalDownloadSpecs = downloadSpecs;
@@ -3402,7 +3476,12 @@ OpenArea: ${document.getElementById('statArea').innerText}
         if (authManager.currentUser) {
             await authManager.trackDownload('txt');
         }
-        originalDownloadSpecs();
+        // Check if there's content to download
+        if (typeof originalDownloadSpecs === 'function') {
+            originalDownloadSpecs();
+        } else {
+            alert('No settings to download. Please configure and generate a pattern first.');
+        }
     };
     
     const originalDownloadDXF = downloadDXF;
@@ -3413,7 +3492,12 @@ OpenArea: ${document.getElementById('statArea').innerText}
             return;
         }
         await authManager.trackDownload('dxf');
-        originalDownloadDXF();
+        // Check if there's content to download
+        if (typeof originalDownloadDXF === 'function') {
+            originalDownloadDXF();
+        } else {
+            alert('No pattern to download. Please generate a pattern first.');
+        }
     };
     
     const originalDownloadSVG = downloadSVG;
@@ -3424,7 +3508,12 @@ OpenArea: ${document.getElementById('statArea').innerText}
             return;
         }
         await authManager.trackDownload('svg');
-        originalDownloadSVG();
+        // Check if there's content to download
+        if (typeof originalDownloadSVG === 'function') {
+            originalDownloadSVG();
+        } else {
+            alert('No pattern to download. Please generate a pattern first.');
+        }
     };
     
     // Initialize auth on page load
