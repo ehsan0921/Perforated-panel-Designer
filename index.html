@@ -2762,7 +2762,10 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             totalHoleArea += Math.PI * Math.pow(h.r, 2);
         });
         const opening = ((totalHoleArea / (w * h)) * 100).toFixed(2) + "%";
-        return { panels, holes, opening };
+        const minHole = inputs.min.value || "0";
+        const maxHole = inputs.max.value || "0";
+        const spacing = inputs.pitch.value || "0";
+        return { panels, holes, opening, minHole, maxHole, spacing };
     }
 
     function downloadDXF() {
@@ -2844,7 +2847,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             dxf += "20\n" + footerY.toFixed(3) + "\n";
             dxf += "30\n0.0\n";
             dxf += "40\n" + fontSize.toFixed(1) + "\n";
-            dxf += "1\nPanels: " + stats.panels + " | Holes: " + stats.holes.toLocaleString() + " | Opening: " + stats.opening + "\n";
+            dxf += "1\nPanels: " + stats.panels + " | Holes: " + stats.holes.toLocaleString() + " | Opening: " + stats.opening + " | Min Hole: " + stats.minHole + "mm | Max Hole: " + stats.maxHole + "mm | Spacing: " + stats.spacing + "mm\n";
             dxf += "50\n0.0\n";
         }
 
@@ -2916,7 +2919,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const filename = getDownloadFilename();
         
         // Calculate footer height if needed
-        const footerHeight = includeFooterStatsInDownload ? 40 : 0;
+        const footerHeight = includeFooterStatsInDownload ? 50 : 0;
         
         // Create a temporary canvas to render with/without percentage
         const tempCanvas = document.createElement('canvas');
@@ -2945,7 +2948,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             tempCtx.font = '14px sans-serif';
             tempCtx.textAlign = 'center';
             tempCtx.textBaseline = 'top';
-            const footerText = `Panels: ${stats.panels} | Holes: ${stats.holes.toLocaleString()} | Opening: ${stats.opening}`;
+            const footerText = `Panels: ${stats.panels} | Holes: ${stats.holes.toLocaleString()} | Opening: ${stats.opening} | Min Hole: ${stats.minHole}mm | Max Hole: ${stats.maxHole}mm | Spacing: ${stats.spacing}mm`;
             tempCtx.fillText(footerText, tempCanvas.width / 2, canvas.height + 10);
             tempCtx.restore();
         }
@@ -3005,7 +3008,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         if (includeFooterStatsInDownload) {
             const stats = getFooterStatistics();
             const footerY = totalH + 20; // Position below the design
-            svg += `<text x="${totalW / 2}" y="${footerY}" fill="#000000" font-family="Arial" font-size="8" text-anchor="middle">Panels: ${stats.panels} | Holes: ${stats.holes.toLocaleString()} | Opening: ${stats.opening}</text>\n`;
+            svg += `<text x="${totalW / 2}" y="${footerY}" fill="#000000" font-family="Arial" font-size="8" text-anchor="middle">Panels: ${stats.panels} | Holes: ${stats.holes.toLocaleString()} | Opening: ${stats.opening} | Min Hole: ${stats.minHole}mm | Max Hole: ${stats.maxHole}mm | Spacing: ${stats.spacing}mm</text>\n`;
         }
         
         svg += '</svg>';
@@ -3070,7 +3073,7 @@ OpenArea: ${document.getElementById('statArea').innerText}
         if (!sourceImage) return null;
         
         // Calculate footer height if needed
-        const footerHeight = includeFooterStatsInDownload ? 40 : 0;
+        const footerHeight = includeFooterStatsInDownload ? 50 : 0;
         
         // Create a temporary canvas to render with/without percentage
         const tempCanvas = document.createElement('canvas');
@@ -3099,7 +3102,7 @@ OpenArea: ${document.getElementById('statArea').innerText}
             tempCtx.font = '14px sans-serif';
             tempCtx.textAlign = 'center';
             tempCtx.textBaseline = 'top';
-            const footerText = `Panels: ${stats.panels} | Holes: ${stats.holes.toLocaleString()} | Opening: ${stats.opening}`;
+            const footerText = `Panels: ${stats.panels} | Holes: ${stats.holes.toLocaleString()} | Opening: ${stats.opening} | Min Hole: ${stats.minHole}mm | Max Hole: ${stats.maxHole}mm | Spacing: ${stats.spacing}mm`;
             tempCtx.fillText(footerText, tempCanvas.width / 2, canvas.height + 10);
             tempCtx.restore();
         }
@@ -3228,7 +3231,7 @@ OpenArea: ${document.getElementById('statArea').innerText}
             dxf += "20\n" + footerY.toFixed(3) + "\n";
             dxf += "30\n0.0\n";
             dxf += "40\n" + fontSize.toFixed(1) + "\n";
-            dxf += "1\nPanels: " + stats.panels + " | Holes: " + stats.holes.toLocaleString() + " | Opening: " + stats.opening + "\n";
+            dxf += "1\nPanels: " + stats.panels + " | Holes: " + stats.holes.toLocaleString() + " | Opening: " + stats.opening + " | Min Hole: " + stats.minHole + "mm | Max Hole: " + stats.maxHole + "mm | Spacing: " + stats.spacing + "mm\n";
             dxf += "50\n0.0\n";
         }
 
@@ -3287,7 +3290,7 @@ OpenArea: ${document.getElementById('statArea').innerText}
         if (includeFooterStatsInDownload) {
             const stats = getFooterStatistics();
             const footerY = totalH + 20; // Position below the design
-            svg += `<text x="${totalW / 2}" y="${footerY}" fill="#000000" font-family="Arial" font-size="8" text-anchor="middle">Panels: ${stats.panels} | Holes: ${stats.holes.toLocaleString()} | Opening: ${stats.opening}</text>\n`;
+            svg += `<text x="${totalW / 2}" y="${footerY}" fill="#000000" font-family="Arial" font-size="8" text-anchor="middle">Panels: ${stats.panels} | Holes: ${stats.holes.toLocaleString()} | Opening: ${stats.opening} | Min Hole: ${stats.minHole}mm | Max Hole: ${stats.maxHole}mm | Spacing: ${stats.spacing}mm</text>\n`;
         }
         
         svg += '</svg>';
