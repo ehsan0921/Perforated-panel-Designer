@@ -1396,8 +1396,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             <h2>Change Password</h2>
             <span class="modal-close" onclick="closeChangePasswordModal()">&times;</span>
         </div>
-        <div class="form-group">
-            <label>Current Password</label>
+        <div class="form-group" id="currentPasswordGroup">
+            <label id="currentPasswordLabel">Current Password</label>
             <input type="password" id="currentPassword" placeholder="Enter current password">
         </div>
         <div class="form-group">
@@ -3179,10 +3179,41 @@ OpenArea: ${document.getElementById('statArea').innerText}
         }
     });
     
+    // Check if user signed in with Google
+    function isGoogleUser() {
+        if (!authManager.currentUser) return false;
+        const providers = authManager.currentUser.providerData || [];
+        return providers.some(provider => provider.providerId === 'google.com');
+    }
+    
     // Change Password Functions
     function showChangePasswordModal() {
         document.getElementById('changePasswordModal').classList.add('active');
         document.getElementById('userMenuDropdown').classList.add('hidden');
+        
+        // Check if user is Google-authenticated
+        const isGoogle = isGoogleUser();
+        const currentPasswordGroup = document.getElementById('currentPasswordGroup');
+        const currentPasswordLabel = document.getElementById('currentPasswordLabel');
+        
+        if (isGoogle) {
+            // Hide current password field for Google users
+            if (currentPasswordGroup) {
+                currentPasswordGroup.style.display = 'none';
+            }
+            if (currentPasswordLabel) {
+                currentPasswordLabel.textContent = 'Set Password (Google users can set a password)';
+            }
+        } else {
+            // Show current password field for email/password users
+            if (currentPasswordGroup) {
+                currentPasswordGroup.style.display = 'block';
+            }
+            if (currentPasswordLabel) {
+                currentPasswordLabel.textContent = 'Current Password';
+            }
+        }
+        
         // Clear form
         document.getElementById('currentPassword').value = '';
         document.getElementById('newPassword').value = '';
@@ -3206,9 +3237,18 @@ OpenArea: ${document.getElementById('statArea').innerText}
         errorEl.classList.remove('show');
         successEl.classList.remove('show');
         
-        // Validation
-        if (!currentPassword || !newPassword || !confirmPassword) {
-            errorEl.textContent = 'All fields are required';
+        // Check if user is Google-authenticated
+        const isGoogle = isGoogleUser();
+        
+        // Validation - skip current password for Google users
+        if (!isGoogle && !currentPassword) {
+            errorEl.textContent = 'Current password is required';
+            errorEl.classList.add('show');
+            return;
+        }
+        
+        if (!newPassword || !confirmPassword) {
+            errorEl.textContent = 'New password fields are required';
             errorEl.classList.add('show');
             return;
         }
@@ -3226,19 +3266,40 @@ OpenArea: ${document.getElementById('statArea').innerText}
         }
         
         try {
-            // Re-authenticate user with current password
             const user = authManager.currentUser;
-            const credential = firebase.auth.EmailAuthProvider.credential(
-                user.email,
-                currentPassword
-            );
             
-            await user.reauthenticateWithCredential(credential);
+            if (isGoogle) {
+                // For Google users, we need to link email/password provider first
+                // But Firebase requires re-authentication for security
+                // For Google users setting password for the first time, we'll use updatePassword
+                // which should work if the account has email/password linked, or we'll get an error
+                try {
+                    await user.updatePassword(newPassword);
+                    successEl.textContent = 'Password set successfully! You can now use email/password to login.';
+                } catch (updateError) {
+                    if (updateError.code === 'auth/requires-recent-login') {
+                        errorEl.textContent = 'For security, please sign out and sign in again, then set your password.';
+                        errorEl.classList.add('show');
+                        return;
+                    } else {
+                        // Try to link email/password provider
+                        // This requires the user to have a password already set
+                        errorEl.textContent = 'Unable to set password. Please contact support or try signing in with Google again.';
+                        errorEl.classList.add('show');
+                        return;
+                    }
+                }
+            } else {
+                // For email/password users, re-authenticate first
+                const credential = firebase.auth.EmailAuthProvider.credential(
+                    user.email,
+                    currentPassword
+                );
+                await user.reauthenticateWithCredential(credential);
+                await user.updatePassword(newPassword);
+                successEl.textContent = 'Password changed successfully!';
+            }
             
-            // Update password
-            await user.updatePassword(newPassword);
-            
-            successEl.textContent = 'Password changed successfully!';
             successEl.classList.add('show');
             
             // Clear form
