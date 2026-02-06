@@ -887,6 +887,191 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         .full-width {
             grid-column: span 2;
         }
+        
+        /* Download Toggle */
+        .download-with-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .download-toggle {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            background: #cbd5e1;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        
+        .download-toggle.active {
+            background: var(--primary);
+        }
+        
+        .download-toggle::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        .download-toggle.active::after {
+            transform: translateX(16px);
+        }
+        
+        .download-toggle-label {
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        
+        /* Slider Styles */
+        .slider-container {
+            margin-top: 10px;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+        }
+        
+        .slider-value {
+            font-weight: 600;
+            color: var(--primary);
+            min-width: 40px;
+            text-align: right;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        input[type="range"]:hover::-webkit-slider-thumb {
+            background: var(--primary-hover);
+        }
+        
+        input[type="range"]:hover::-moz-range-thumb {
+            background: var(--primary-hover);
+        }
+        
+        /* Alignment Controls */
+        .alignment-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            margin-top: 10px;
+        }
+        
+        .align-btn {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        
+        .align-btn:hover {
+            background: #f1f5f9;
+            border-color: var(--primary);
+        }
+        
+        .align-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .align-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+        
+        .align-center {
+            grid-column: 2;
+            grid-row: 2;
+        }
+        
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: #cbd5e1;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .toggle-switch.active {
+            background: var(--primary);
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s;
+        }
+        
+        .toggle-switch.active::after {
+            transform: translateX(20px);
+        }
 
     </style>
 </head>
@@ -1038,6 +1223,57 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             <span>Invert (Darker = Smaller Hole)</span>
         </label>
     </div>
+    
+    <h2>Panel Alignment</h2>
+    <div class="control-group">
+        <label>Hole Pattern Alignment</label>
+        <div class="alignment-controls">
+            <button class="align-btn" data-align="top-left" title="Top Left">
+                <svg viewBox="0 0 24 24"><path d="M9 21h6v-2H9v2zm-4-4h10v-2H5v2zm-4-4h14v-2H1v2zm0-4h14V7H1v2zm0-4h14V3H1v2z"/></svg>
+            </button>
+            <button class="align-btn" data-align="top" title="Top">
+                <svg viewBox="0 0 24 24"><path d="M3 13h18v-2H3v2zm0-4h18V7H3v2zm0-4h18V3H3v2z"/></svg>
+            </button>
+            <button class="align-btn" data-align="top-right" title="Top Right">
+                <svg viewBox="0 0 24 24"><path d="M15 21h-6v-2h6v2zm4-4H5v-2h14v2zm0-4H1v-2h18v2zm0-4H1V7h18v2zm0-4H1V3h18v2z"/></svg>
+            </button>
+            <button class="align-btn" data-align="left" title="Left">
+                <svg viewBox="0 0 24 24"><path d="M15 15H3v2h12v-2zm0-8H3v2h12V7zM3 13h18v-2H3v2zm0 8h18v-2H3v2zM3 3v2h18V3H3z"/></svg>
+            </button>
+            <button class="align-btn align-center active" data-align="center" title="Center">
+                <svg viewBox="0 0 24 24"><path d="M3 21h18v-2H3v2zM3 5v2h18V5H3zm0 4h18v-2H3v2zm0 4h18v-2H3v2zm0 4h18v-2H3v2z"/></svg>
+            </button>
+            <button class="align-btn" data-align="right" title="Right">
+                <svg viewBox="0 0 24 24"><path d="M3 21h18v-2H3v2zm0-8h18v-2H3v2zm0-4h18V7H3v2zm0-4h18V3H3v2z"/></svg>
+            </button>
+            <button class="align-btn" data-align="bottom-left" title="Bottom Left">
+                <svg viewBox="0 0 24 24"><path d="M9 3v2H5v2h4v2H3V3h6zm10 0v6h-6V7h4V5h-4V3h6zM3 21h18v-2H3v2zm0-4h18v-2H3v2z"/></svg>
+            </button>
+            <button class="align-btn" data-align="bottom" title="Bottom">
+                <svg viewBox="0 0 24 24"><path d="M3 11h18v2H3v-2zm0-4h18v2H3V7zm0 8h18v2H3v-2zm0 4h18v2H3v-2z"/></svg>
+            </button>
+            <button class="align-btn" data-align="bottom-right" title="Bottom Right">
+                <svg viewBox="0 0 24 24"><path d="M15 3H9v2h6V3zm-4 4H5v2h6V7zm10 0h-6v2h6V7zM3 15h18v-2H3v2zm0 4h18v-2H3v2zm0 4h18v-2H3v2z"/></svg>
+            </button>
+        </div>
+        <small>Adjust starting point for hole pattern in each panel</small>
+    </div>
+    
+    <h2>Display Options</h2>
+    <div class="control-group">
+        <div class="toggle-group">
+            <label style="margin:0; flex:1;">Show Opening % on Panels</label>
+            <div class="toggle-switch" id="showPercentageToggle"></div>
+        </div>
+        <div class="slider-container" id="percentageSizeContainer" style="display:none;">
+            <div class="slider-label">
+                <label style="margin:0;">Text Size</label>
+                <span class="slider-value" id="percentageSizeValue">100%</span>
+            </div>
+            <input type="range" id="percentageSizeSlider" min="50" max="1000" value="100" step="10">
+        </div>
+        <small>Display opening percentage overlay on each subdivided panel</small>
+    </div>
 
     <button id="generateBtn" class="btn-primary">Generate Pattern</button>
     
@@ -1058,7 +1294,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     <div class="download-grid">
         <button id="downloadImgBtn" class="btn-secondary" disabled="">Map (.png)</button>
         <button id="downloadTxtBtn" class="btn-secondary" disabled="">Settings (.txt)</button>
-        <button id="downloadDxfBtn" class="btn-secondary full-width" disabled="">CAD (.dxf)</button>
+        <button id="downloadDxfBtn" class="btn-secondary" disabled="">CAD (.dxf)</button>
+        <button id="downloadSvgBtn" class="btn-secondary" disabled="">Vector (.svg)</button>
     </div>
 
 </aside>
@@ -1112,6 +1349,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     const downloadImgBtn = document.getElementById('downloadImgBtn');
     const downloadTxtBtn = document.getElementById('downloadTxtBtn');
     const downloadDxfBtn = document.getElementById('downloadDxfBtn');
+    const downloadSvgBtn = document.getElementById('downloadSvgBtn');
     
     const statsPanel = document.getElementById('stats');
     const ratioDisplay = document.getElementById('ratioDisplay');
@@ -1132,6 +1370,13 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     const btnZoomIn = document.getElementById('zoomIn');
     const btnZoomOut = document.getElementById('zoomOut');
     const btnZoomFit = document.getElementById('zoomFit');
+    
+    // Alignment and Display Controls
+    const alignmentButtons = document.querySelectorAll('.align-btn');
+    const showPercentageToggle = document.getElementById('showPercentageToggle');
+    const percentageSizeSlider = document.getElementById('percentageSizeSlider');
+    const percentageSizeValue = document.getElementById('percentageSizeValue');
+    const percentageSizeContainer = document.getElementById('percentageSizeContainer');
 
     // Inputs
     const inputs = {
@@ -1156,7 +1401,13 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     
     // Holes data cache for DXF export
     let generatedHoles = []; 
-    let sheetDefinitions = []; 
+    let sheetDefinitions = [];
+    
+    // Panel alignment and display state
+    let panelAlignment = 'center'; // 'center', 'top-left', 'top', 'top-right', 'left', 'right', 'bottom-left', 'bottom', 'bottom-right'
+    let showPercentage = false;
+    let percentageSize = 100; // Percentage size multiplier (50-200%)
+    let panelStats = []; // Store stats per panel: [{sheetIndex, holeCount, openArea, bounds}] 
 
     // --- LOCAL STORAGE ---
     function saveSettings() {
@@ -1180,7 +1431,10 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             imgPanY: inputs.imgPanY.value,
             splitMode: splitMode.value,
             lockRatio: lockRatioCheckbox.checked,
-            lockMode: lockPitchRadio.checked ? 'pitch' : 'gap'
+            lockMode: lockPitchRadio.checked ? 'pitch' : 'gap',
+            panelAlignment: panelAlignment,
+            showPercentage: showPercentage,
+            percentageSize: percentageSize
         };
         localStorage.setItem('holemapper_settings_v3', JSON.stringify(settings));
     }
@@ -1212,6 +1466,35 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 
                 if(s.lockMode === 'gap') lockGapRadio.checked = true;
                 else lockPitchRadio.checked = true;
+                
+                if(s.panelAlignment) {
+                    panelAlignment = s.panelAlignment;
+                    if (alignmentButtons && alignmentButtons.length > 0) {
+                        alignmentButtons.forEach(btn => {
+                            btn.classList.toggle('active', btn.dataset.align === panelAlignment);
+                        });
+                    }
+                }
+                
+                if(s.showPercentage !== undefined) {
+                    showPercentage = s.showPercentage;
+                    if (showPercentageToggle) {
+                        showPercentageToggle.classList.toggle('active', showPercentage);
+                    }
+                    if (percentageSizeContainer) {
+                        percentageSizeContainer.style.display = showPercentage ? 'block' : 'none';
+                    }
+                }
+                
+                if(s.percentageSize !== undefined) {
+                    percentageSize = s.percentageSize;
+                    if (percentageSizeSlider) {
+                        percentageSizeSlider.value = percentageSize;
+                    }
+                    if (percentageSizeValue) {
+                        percentageSizeValue.textContent = percentageSize + '%';
+                    }
+                }
                 
                 toggleImgControls();
             } catch(e) { console.error(e); }
@@ -1247,6 +1530,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     downloadImgBtn.addEventListener('click', downloadImage);
     downloadTxtBtn.addEventListener('click', downloadSpecs);
     downloadDxfBtn.addEventListener('click', downloadDXF);
+    downloadSvgBtn.addEventListener('click', downloadSVG);
     
     imgFitMode.addEventListener('change', () => {
         toggleImgControls();
@@ -1263,6 +1547,42 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     btnZoomIn.addEventListener('click', () => applyZoom(scale * 1.2));
     btnZoomOut.addEventListener('click', () => applyZoom(scale * 0.8));
     btnZoomFit.addEventListener('click', zoomFit);
+    
+    // Alignment button handlers
+    if (alignmentButtons && alignmentButtons.length > 0) {
+        alignmentButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                alignmentButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                panelAlignment = btn.dataset.align;
+                saveSettings();
+                if (sourceImage) generatePerforation();
+            });
+        });
+    }
+    
+    // Show percentage toggle
+    if (showPercentageToggle) {
+        showPercentageToggle.addEventListener('click', () => {
+            showPercentage = !showPercentage;
+            showPercentageToggle.classList.toggle('active', showPercentage);
+            if (percentageSizeContainer) {
+                percentageSizeContainer.style.display = showPercentage ? 'block' : 'none';
+            }
+            saveSettings();
+            if (sourceImage) generatePerforation();
+        });
+    }
+    
+    // Percentage size slider
+    if (percentageSizeSlider && percentageSizeValue) {
+        percentageSizeSlider.addEventListener('input', (e) => {
+            percentageSize = parseInt(e.target.value);
+            percentageSizeValue.textContent = percentageSize + '%';
+            saveSettings();
+            if (sourceImage && showPercentage) generatePerforation();
+        });
+    }
     
     // Sync Inputs
     inputs.h.addEventListener('input', () => {
@@ -1493,6 +1813,64 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         return [total];
     }
 
+    // Calculate alignment offset for a panel (usable area after margins)
+    function getAlignmentOffset(usableW, usableH, pitch, alignment) {
+        // Calculate how many complete holes fit in each direction
+        const colsInPanel = Math.floor(usableW / pitch);
+        const rowsInPanel = Math.floor(usableH / pitch);
+        
+        // Calculate the "remainder" space that needs to be distributed for alignment
+        const remainderX = usableW - (colsInPanel * pitch);
+        const remainderY = usableH - (rowsInPanel * pitch);
+        
+        let offsetX = 0;
+        let offsetY = 0;
+        
+        switch(alignment) {
+            case 'top-left':
+                offsetX = 0;
+                offsetY = 0;
+                break;
+            case 'top':
+                offsetX = remainderX / 2;
+                offsetY = 0;
+                break;
+            case 'top-right':
+                offsetX = remainderX;
+                offsetY = 0;
+                break;
+            case 'left':
+                offsetX = 0;
+                offsetY = remainderY / 2;
+                break;
+            case 'center':
+                offsetX = remainderX / 2;
+                offsetY = remainderY / 2;
+                break;
+            case 'right':
+                offsetX = remainderX;
+                offsetY = remainderY / 2;
+                break;
+            case 'bottom-left':
+                offsetX = 0;
+                offsetY = remainderY;
+                break;
+            case 'bottom':
+                offsetX = remainderX / 2;
+                offsetY = remainderY;
+                break;
+            case 'bottom-right':
+                offsetX = remainderX;
+                offsetY = remainderY;
+                break;
+            default:
+                offsetX = remainderX / 2;
+                offsetY = remainderY / 2;
+        }
+        
+        return { offsetX, offsetY };
+    }
+
     function generatePerforation() {
         if (!sourceImage) return;
 
@@ -1624,50 +2002,84 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         
         let count = 0;
         let totalHoleArea = 0;
-        generatedHoles = []; 
+        generatedHoles = [];
+        panelStats = []; // Reset panel stats
+        
+        // Initialize panel stats
+        sheetDefinitions.forEach((sheet, idx) => {
+            panelStats.push({
+                sheetIndex: idx,
+                holeCount: 0,
+                openArea: 0,
+                panelArea: (sheet.w - mL - mR) * (sheet.h - mT - mB)
+            });
+        });
 
-        for (let y = 0; y < rows; y++) {
-            for (let x = 0; x < cols; x++) {
-                const cx = (x * pitch) + (pitch / 2);
-                const cy = (y * pitch) + (pitch / 2);
+        // Process each panel separately with its own alignment
+        sheetDefinitions.forEach((activeSheet, sheetIndex) => {
+            // Calculate usable area (after margins)
+            const usableW = activeSheet.w - mL - mR;
+            const usableH = activeSheet.h - mT - mB;
+            
+            if (usableW <= 0 || usableH <= 0) return; // Skip if no usable area
+            
+            // Calculate alignment offset for the usable area
+            const alignOffset = getAlignmentOffset(usableW, usableH, pitch, panelAlignment);
+            
+            // Calculate how many holes fit in this panel
+            const colsInPanel = Math.floor(usableW / pitch);
+            const rowsInPanel = Math.floor(usableH / pitch);
+            
+            // Starting position for first hole in this panel (with alignment)
+            const startX = activeSheet.x + mL + alignOffset.offsetX + (pitch / 2);
+            const startY = activeSheet.y + mT + alignOffset.offsetY + (pitch / 2);
+            
+            // Generate holes for this panel
+            for (let py = 0; py < rowsInPanel; py++) {
+                for (let px = 0; px < colsInPanel; px++) {
+                    const cx = startX + (px * pitch);
+                    const cy = startY + (py * pitch);
+                    
+                    // Verify hole is within panel bounds
+                    if (cx < activeSheet.x + mL || cx > activeSheet.x + activeSheet.w - mR) continue;
+                    if (cy < activeSheet.y + mT || cy > activeSheet.y + activeSheet.h - mB) continue;
+                    
+                    // Get image pixel for this position
+                    const gridX = Math.floor((cx / w) * cols);
+                    const gridY = Math.floor((cy / h) * rows);
+                    
+                    if (gridX < 0 || gridX >= cols || gridY < 0 || gridY >= rows) continue;
+                    
+                    const idx = (gridY * cols + gridX) * 4;
+                    const bVal = (pixels[idx] + pixels[idx+1] + pixels[idx+2]) / 3;
+                    const norm = bVal / 255;
+                    const sizeFactor = invert ? norm : (1.0 - norm);
+                    const diameter = minDia + (sizeFactor * (maxDia - minDia));
+                    const r = diameter / 2;
 
-                let activeSheet = null;
-                for (let s of sheetDefinitions) {
-                    if (cx >= s.x && cx <= s.x + s.w && cy >= s.y && cy <= s.y + s.h) {
-                        activeSheet = s;
-                        break;
+                    const drawX = cx * pixelScale;
+                    const drawY = cy * pixelScale;
+                    const drawR = r * pixelScale;
+
+                    ctx.beginPath();
+                    ctx.arc(drawX, drawY, drawR, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    generatedHoles.push({x: cx, y: cy, r: r});
+                    
+                    const holeArea = Math.PI * Math.pow(r, 2);
+                    totalHoleArea += holeArea;
+                    count++;
+                    
+                    // Update panel stats
+                    if (sheetIndex < panelStats.length) {
+                        panelStats[sheetIndex].holeCount++;
+                        panelStats[sheetIndex].openArea += holeArea;
                     }
                 }
-
-                if (!activeSheet) continue; 
-
-                const lx = cx - activeSheet.x;
-                const ly = cy - activeSheet.y;
-
-                if (lx < mL || lx > (activeSheet.w - mR)) continue;
-                if (ly < mT || ly > (activeSheet.h - mB)) continue;
-
-                const idx = (y * cols + x) * 4;
-                const bVal = (pixels[idx] + pixels[idx+1] + pixels[idx+2]) / 3;
-                const norm = bVal / 255;
-                const sizeFactor = invert ? norm : (1.0 - norm);
-                const diameter = minDia + (sizeFactor * (maxDia - minDia));
-                const r = diameter / 2;
-
-                const drawX = cx * pixelScale;
-                const drawY = cy * pixelScale;
-                const drawR = r * pixelScale;
-
-                ctx.beginPath();
-                ctx.arc(drawX, drawY, drawR, 0, Math.PI * 2);
-                ctx.fill();
-
-                generatedHoles.push({x: cx, y: cy, r: r});
-                
-                totalHoleArea += Math.PI * Math.pow(r, 2);
-                count++;
             }
-        }
+        });
+        
         
         ctx.strokeStyle = "rgba(239, 68, 68, 0.3)";
         ctx.lineWidth = 1;
@@ -1678,6 +2090,9 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             const sh = (sheet.h - mT - mB) * pixelScale;
             if (sw > 0 && sh > 0) ctx.strokeRect(sx, sy, sw, sh);
         });
+        
+        // Draw opening percentage overlay for each panel (if enabled for display)
+        drawPercentageOverlay(ctx, pixelScale, showPercentage);
 
         document.getElementById('statCount').innerText = count.toLocaleString();
         document.getElementById('statArea').innerText = ((totalHoleArea / (w*h)) * 100).toFixed(2) + "%";
@@ -1685,6 +2100,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         downloadImgBtn.disabled = false;
         downloadTxtBtn.disabled = false;
         downloadDxfBtn.disabled = false;
+        downloadSvgBtn.disabled = false;
         
         if (scale === 1 && panX === 0) zoomFit();
     }
@@ -1694,48 +2110,72 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     function downloadDXF() {
         if (generatedHoles.length === 0) return;
         const filename = currentFileID || "perforation";
-
+        const totalH = parseFloat(inputs.h.value);
+        
+        // Minimal DXF R12 format - simplest possible for maximum compatibility
         let dxf = "";
-        // Header
-        dxf += "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1009\n0\nENDSEC\n";
         
-        // Tables (Layer Table corrected)
-        dxf += "0\nSECTION\n2\nTABLES\n";
-        dxf += "0\nTABLE\n2\nLAYER\n70\n3\n";
-        
-        // Layer 0
-        dxf += "0\nLAYER\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS\n";
-        // Layer Holes
-        dxf += "0\nLAYER\n2\nHoles\n70\n0\n62\n1\n6\nCONTINUOUS\n";
-        // Layer Panels
-        dxf += "0\nLAYER\n2\nPanels\n70\n0\n62\n3\n6\nCONTINUOUS\n";
-        
-        dxf += "0\nENDTAB\n"; // End Layer Table
+        // Header - minimal required
+        dxf += "0\nSECTION\n2\nHEADER\n";
+        dxf += "9\n$ACADVER\n1\nAC1009\n";
         dxf += "0\nENDSEC\n";
-
-        // Entities
+        
+        // Tables - minimal required
+        dxf += "0\nSECTION\n2\nTABLES\n";
+        
+        // Layer table - only layer 0 required
+        dxf += "0\nTABLE\n2\nLAYER\n70\n1\n";
+        dxf += "0\nLAYER\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS\n";
+        dxf += "0\nENDTAB\n";
+        
+        dxf += "0\nENDSEC\n";
+        
+        // Entities section
         dxf += "0\nSECTION\n2\nENTITIES\n";
-
+        
+        // Draw panel boundaries as simple POLYLINE
         sheetDefinitions.forEach(s => {
-            dxf += "0\nLWPOLYLINE\n8\nPanels\n90\n4\n70\n1\n"; 
-            dxf += `10\n${s.x}\n20\n${s.y}\n`;
-            dxf += `10\n${s.x + s.w}\n20\n${s.y}\n`;
-            dxf += `10\n${s.x + s.w}\n20\n${s.y + s.h}\n`;
-            dxf += `10\n${s.x}\n20\n${s.y + s.h}\n`;
+            dxf += "0\nPOLYLINE\n8\n0\n66\n1\n70\n1\n";
+            dxf += "0\nVERTEX\n8\n0\n10\n" + s.x.toFixed(3) + "\n20\n" + (totalH - s.y).toFixed(3) + "\n";
+            dxf += "0\nVERTEX\n8\n0\n10\n" + (s.x + s.w).toFixed(3) + "\n20\n" + (totalH - s.y).toFixed(3) + "\n";
+            dxf += "0\nVERTEX\n8\n0\n10\n" + (s.x + s.w).toFixed(3) + "\n20\n" + (totalH - (s.y + s.h)).toFixed(3) + "\n";
+            dxf += "0\nVERTEX\n8\n0\n10\n" + s.x.toFixed(3) + "\n20\n" + (totalH - (s.y + s.h)).toFixed(3) + "\n";
+            dxf += "0\nSEQEND\n8\n0\n";
         });
-
+        
+        // Draw holes as circles
         generatedHoles.forEach(h => {
-            const totalH = parseFloat(inputs.h.value);
             const dxfY = totalH - h.y;
-            dxf += "0\nCIRCLE\n8\nHoles\n";
-            dxf += `10\n${h.x.toFixed(3)}\n`; 
-            dxf += `20\n${dxfY.toFixed(3)}\n`; 
-            dxf += `40\n${h.r.toFixed(3)}\n`; 
+            dxf += "0\nCIRCLE\n8\n0\n";
+            dxf += "10\n" + h.x.toFixed(3) + "\n";
+            dxf += "20\n" + dxfY.toFixed(3) + "\n";
+            dxf += "30\n0.0\n";
+            dxf += "40\n" + h.r.toFixed(3) + "\n";
         });
-
+        
+        // Draw percentage text if enabled
+        if (showPercentage && panelStats.length > 0) {
+            panelStats.forEach((stat, idx) => {
+                if (idx < sheetDefinitions.length && stat.panelArea > 0) {
+                    const sheet = sheetDefinitions[idx];
+                    const percentage = stat.panelArea > 0 ? ((stat.openArea / stat.panelArea) * 100).toFixed(1) : "0.0";
+                    const textX = sheet.x + sheet.w / 2;
+                    const textY = totalH - (sheet.y + sheet.h / 2);
+                    
+                    dxf += "0\nTEXT\n8\n0\n";
+                    dxf += "10\n" + textX.toFixed(3) + "\n";
+                    dxf += "20\n" + textY.toFixed(3) + "\n";
+                    dxf += "30\n0.0\n";
+                    dxf += "40\n10.0\n";
+                    dxf += "1\n" + percentage + "%\n";
+                    dxf += "50\n0.0\n";
+                }
+            });
+        }
+        
         dxf += "0\nENDSEC\n";
         dxf += "0\nEOF\n";
-
+        
         const blob = new Blob([dxf], {type: "application/dxf"});
         const link = document.createElement('a');
         link.download = `${filename}.dxf`;
@@ -1743,14 +2183,132 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         link.click();
     }
 
+    // Helper function to draw percentage overlay
+    function drawPercentageOverlay(ctx, pixelScale, shouldDraw) {
+        if (!shouldDraw || panelStats.length === 0) return;
+        
+        ctx.save();
+        const baseFontSize = Math.max(14, Math.min(24, pixelScale * 1.5));
+        const fontSize = baseFontSize * (percentageSize / 100);
+        ctx.font = `bold ${fontSize}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        
+        panelStats.forEach((stat, idx) => {
+            if (idx < sheetDefinitions.length && stat.panelArea > 0) {
+                const sheet = sheetDefinitions[idx];
+                const percentage = stat.panelArea > 0 ? ((stat.openArea / stat.panelArea) * 100).toFixed(1) : "0.0";
+                
+                const centerX = (sheet.x + sheet.w / 2) * pixelScale;
+                const centerY = (sheet.y + sheet.h / 2) * pixelScale;
+                
+                // Draw background rectangle
+                const text = `${percentage}%`;
+                const metrics = ctx.measureText(text);
+                const textWidth = metrics.width;
+                const textHeight = fontSize;
+                const padding = 6;
+                
+                // Background
+                ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+                ctx.fillRect(
+                    centerX - textWidth / 2 - padding,
+                    centerY - textHeight / 2 - padding,
+                    textWidth + padding * 2,
+                    textHeight + padding * 2
+                );
+                
+                // Border
+                ctx.strokeStyle = "white";
+                ctx.lineWidth = 1;
+                ctx.strokeRect(
+                    centerX - textWidth / 2 - padding,
+                    centerY - textHeight / 2 - padding,
+                    textWidth + padding * 2,
+                    textHeight + padding * 2
+                );
+                
+                // Text
+                ctx.fillStyle = "white";
+                ctx.fillText(text, centerX, centerY);
+            }
+        });
+        ctx.restore();
+    }
+
     function downloadImage() {
         if (!sourceImage) return;
         const filename = currentFileID || "perforation";
         
+        // Create a temporary canvas to render with/without percentage
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        // Copy the main canvas
+        tempCtx.drawImage(canvas, 0, 0);
+        
+        // Add percentage if "Show Opening % on Panels" is enabled
+        if (showPercentage) {
+            const pixelScale = canvas.width / parseFloat(inputs.w.value);
+            drawPercentageOverlay(tempCtx, pixelScale, true);
+        }
+        
         const imgLink = document.createElement('a');
         imgLink.download = `${filename}.png`;
-        imgLink.href = canvas.toDataURL('image/png');
+        imgLink.href = tempCanvas.toDataURL('image/png');
         imgLink.click();
+    }
+
+    function downloadSVG() {
+        if (generatedHoles.length === 0) return;
+        const filename = currentFileID || "perforation";
+        const totalH = parseFloat(inputs.h.value);
+        const totalW = parseFloat(inputs.w.value);
+        
+        let svg = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        svg += '<svg xmlns="http://www.w3.org/2000/svg" ';
+        svg += `width="${totalW}mm" height="${totalH}mm" `;
+        svg += `viewBox="0 0 ${totalW} ${totalH}">\n`;
+        svg += '<g transform="translate(0,' + totalH + ') scale(1,-1)">\n'; // Flip Y axis
+        
+        // Draw panel boundaries
+        svg += '<g id="panels" stroke="#0000FF" stroke-width="0.5" fill="none">\n';
+        sheetDefinitions.forEach(s => {
+            svg += `<rect x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}"/>\n`;
+        });
+        svg += '</g>\n';
+        
+        // Draw holes
+        svg += '<g id="holes" fill="#000000">\n';
+        generatedHoles.forEach(h => {
+            svg += `<circle cx="${h.x.toFixed(3)}" cy="${h.y.toFixed(3)}" r="${h.r.toFixed(3)}"/>\n`;
+        });
+        svg += '</g>\n';
+        
+        // Draw percentage text if enabled
+        if (showPercentage && panelStats.length > 0) {
+            svg += '<g id="text" fill="#000000" font-family="Arial" font-size="10" text-anchor="middle">\n';
+            panelStats.forEach((stat, idx) => {
+                if (idx < sheetDefinitions.length && stat.panelArea > 0) {
+                    const sheet = sheetDefinitions[idx];
+                    const percentage = stat.panelArea > 0 ? ((stat.openArea / stat.panelArea) * 100).toFixed(1) : "0.0";
+                    const textX = sheet.x + sheet.w / 2;
+                    const textY = sheet.y + sheet.h / 2;
+                    svg += `<text x="${textX.toFixed(3)}" y="${textY.toFixed(3)}">${percentage}%</text>\n`;
+                }
+            });
+            svg += '</g>\n';
+        }
+        
+        svg += '</g>\n</svg>';
+        
+        const blob = new Blob([svg], { type: 'image/svg+xml' });
+        const link = document.createElement('a');
+        link.download = `${filename}.svg`;
+        link.href = URL.createObjectURL(blob);
+        link.click();
     }
 
     function downloadSpecs() {
