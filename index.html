@@ -1528,6 +1528,11 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     </div>
     
     <div class="control-group sub-control-panel">
+        <label style="margin-bottom:8px">Project Name</label>
+        <input type="text" id="projectName" placeholder="Enter project name" style="width:100%; padding:6px; margin-bottom:8px; border:1px solid #e2e8f0; border-radius:4px;">
+    </div>
+    
+    <div class="control-group sub-control-panel">
         <label style="margin-bottom:8px">Image Fit &amp; Placement</label>
         <select id="imgFitMode" style="margin-bottom:8px">
             <option value="stretch">Stretch to Fit (Default)</option>
@@ -1843,6 +1848,9 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     const percentageSizeValue = document.getElementById('percentageSizeValue');
     const percentageSizeContainer = document.getElementById('percentageSizeContainer');
 
+    // Project Name
+    const projectNameInput = document.getElementById('projectName');
+    
     // Inputs
     const inputs = {
         w: document.getElementById('panelW'),
@@ -1877,6 +1885,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     // --- LOCAL STORAGE ---
     function saveSettings() {
         const settings = {
+            projectName: projectNameInput ? projectNameInput.value : '',
             w: inputs.w.value,
             h: inputs.h.value,
             pitch: inputs.pitch.value,
@@ -1909,6 +1918,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         if (saved) {
             try {
                 const s = JSON.parse(saved);
+                if(s.projectName && projectNameInput) projectNameInput.value = s.projectName;
                 if(s.w) inputs.w.value = s.w;
                 if(s.h) inputs.h.value = s.h;
                 if(s.pitch) inputs.pitch.value = s.pitch;
@@ -1982,6 +1992,13 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             result += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         return "HM-" + result;
+    }
+    
+    function getDownloadFilename(extension = '') {
+        const projectName = projectNameInput && projectNameInput.value.trim() ? projectNameInput.value.trim() : '';
+        const uniqueId = currentFileID || generateUniqueID();
+        const filename = projectName ? `${projectName}_${uniqueId}` : uniqueId;
+        return extension ? `${filename}.${extension}` : filename;
     }
 
     // Initialize
@@ -2583,6 +2600,14 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         document.getElementById('statCount').innerText = count.toLocaleString();
         document.getElementById('statArea').innerText = ((totalHoleArea / (w*h)) * 100).toFixed(2) + "%";
         
+        // Update footer statistics
+        const footerPanels = document.getElementById('footerPanels');
+        const footerHoles = document.getElementById('footerHoles');
+        const footerOpening = document.getElementById('footerOpening');
+        if (footerPanels) footerPanels.textContent = sheetDefinitions.length.toString();
+        if (footerHoles) footerHoles.textContent = count.toLocaleString();
+        if (footerOpening) footerOpening.textContent = ((totalHoleArea / (w*h)) * 100).toFixed(2) + "%";
+        
         downloadImgBtn.disabled = false;
         downloadTxtBtn.disabled = false;
         downloadDxfBtn.disabled = false;
@@ -2595,7 +2620,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 
     function downloadDXF() {
         if (generatedHoles.length === 0) return;
-        const filename = currentFileID || "perforation";
+        const filename = getDownloadFilename();
         const totalH = parseFloat(inputs.h.value);
 
         // Minimal DXF R12 format - simplest possible for maximum compatibility
@@ -2724,7 +2749,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 
     function downloadImage() {
         if (!sourceImage) return;
-        const filename = currentFileID || "perforation";
+        const filename = getDownloadFilename();
         
         // Create a temporary canvas to render with/without percentage
         const tempCanvas = document.createElement('canvas');
@@ -2749,7 +2774,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 
     function downloadSVG() {
         if (generatedHoles.length === 0) return;
-        const filename = currentFileID || "perforation";
+        const filename = getDownloadFilename();
         const totalH = parseFloat(inputs.h.value);
         const totalW = parseFloat(inputs.w.value);
         
@@ -2798,7 +2823,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     }
 
     function downloadSpecs() {
-        const filename = currentFileID || "perforation";
+        const filename = getDownloadFilename();
         const now = new Date();
         
         // Structured Text Content
@@ -3654,7 +3679,20 @@ OpenArea: ${document.getElementById('statArea').innerText}
 </div> <!-- End main-wrapper -->
 
 <footer class="bg-white border-t border-gray-200 py-2 text-center text-sm text-gray-600">
-    Designed by Ehsan Mokhtary
+    <div style="display: flex; justify-content: space-around; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+        <div>
+            <strong>Panels:</strong> <span id="footerPanels">0</span>
+        </div>
+        <div>
+            <strong>Holes:</strong> <span id="footerHoles">0</span>
+        </div>
+        <div>
+            <strong>Opening:</strong> <span id="footerOpening">0%</span>
+        </div>
+        <div style="margin-left: auto;">
+            Designed by Ehsan Mokhtary
+        </div>
+    </div>
 </footer>
 
 </body></html>
