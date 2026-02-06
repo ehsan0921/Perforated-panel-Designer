@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Perforated panel Designer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f1f5f9;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #3b82f6;
+        }
+        table {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        th {
+            background: #f8fafc;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #475569;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen bg-gray-100">
+        <!-- Header -->
+        <header class="bg-white border-b border-gray-200 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center">
+                        <h1 class="text-xl font-bold text-blue-600">Admin Panel</h1>
+                        <span class="ml-4 text-sm text-gray-500">Perforated panel Designer</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span id="userEmail" class="text-sm text-gray-600"></span>
+                        <button onclick="handleLogout()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Access Denied Message -->
+            <div id="accessDenied" class="hidden bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                <h2 class="text-xl font-bold text-red-800 mb-2">Access Denied</h2>
+                <p class="text-red-600">You must be logged in as <strong>Ehsan0921@gmail.com</strong> to access this page.</p>
+                <button onclick="handleLogin()" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    Login
+                </button>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="text-center py-12">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <p class="mt-4 text-gray-600">Checking access...</p>
+            </div>
+
+            <!-- Admin Content -->
+            <div id="adminContent" class="hidden">
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="stat-card">
+                        <h3>Total Users</h3>
+                        <div class="value" id="totalUsers">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Downloads</h3>
+                        <div class="value" id="totalDownloads">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Downloads Today</h3>
+                        <div class="value" id="downloadsToday">0</div>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-800">Users</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Downloads</th>
+                                    <th>Last Login</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td colspan="3" class="text-center text-gray-500 py-8">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Login Required</h2>
+                <button onclick="closeLoginModal()" class="text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <div id="loginForm">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="loginEmail" placeholder="your@email.com" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div id="loginError" class="hidden text-red-600 text-sm mb-4"></div>
+                <button onclick="handleEmailLogin()" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mb-2">
+                    Login
+                </button>
+                <button onclick="handleGoogleLogin()" class="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Login with Google
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDyaAtK5YBWpMedGCICayR-VJq2111SpgU",
+            authDomain: "perforated-panel-designer.firebaseapp.com",
+            projectId: "perforated-panel-designer",
+            storageBucket: "perforated-panel-designer.firebasestorage.app",
+            messagingSenderId: "203709637797",
+            appId: "1:203709637797:web:544190529c7c874aaf994c"
+        };
+
+        // Initialize Firebase
+        if (typeof firebase !== 'undefined') {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        // Admin email
+        const ADMIN_EMAIL = 'Ehsan0921@gmail.com';
+
+        // Auth Manager
+        const authManager = {
+            auth: null,
+            db: null,
+            currentUser: null,
+
+            init() {
+                if (typeof firebase === 'undefined') {
+                    console.error('Firebase not loaded');
+                    return;
+                }
+
+                this.auth = firebase.auth();
+                this.db = firebase.firestore();
+
+                // Listen for auth state changes
+                this.auth.onAuthStateChanged((user) => {
+                    this.currentUser = user;
+                    checkAccess();
+                });
+            },
+
+            async signInWithEmail(email, password) {
+                try {
+                    await this.auth.signInWithEmailAndPassword(email, password);
+                    return { success: true };
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            },
+
+            async signInWithGoogle() {
+                try {
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    provider.addScope('profile');
+                    provider.addScope('email');
+                    await this.auth.signInWithPopup(provider);
+                    return { success: true };
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            },
+
+            async signOut() {
+                try {
+                    await this.auth.signOut();
+                    return { success: true };
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            }
+        };
+
+        // Check if user has access
+        function checkAccess() {
+            const loadingState = document.getElementById('loadingState');
+            const accessDenied = document.getElementById('accessDenied');
+            const adminContent = document.getElementById('adminContent');
+            const userEmail = document.getElementById('userEmail');
+
+            if (!authManager.currentUser) {
+                loadingState.classList.add('hidden');
+                accessDenied.classList.remove('hidden');
+                adminContent.classList.add('hidden');
+                return;
+            }
+
+            const email = authManager.currentUser.email;
+            userEmail.textContent = email;
+
+            if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+                // User has access
+                loadingState.classList.add('hidden');
+                accessDenied.classList.add('hidden');
+                adminContent.classList.remove('hidden');
+                loadAdminData();
+            } else {
+                // Access denied
+                loadingState.classList.add('hidden');
+                accessDenied.classList.remove('hidden');
+                adminContent.classList.add('hidden');
+            }
+        }
+
+        // Load admin data
+        async function loadAdminData() {
+            if (!authManager.db) return;
+
+            try {
+                // Get total users
+                const usersSnapshot = await authManager.db.collection('users').get();
+                document.getElementById('totalUsers').textContent = usersSnapshot.size;
+
+                // Get total downloads
+                const downloadsSnapshot = await authManager.db.collection('downloads').get();
+                document.getElementById('totalDownloads').textContent = downloadsSnapshot.size;
+
+                // Get downloads today
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const todayDownloads = downloadsSnapshot.docs.filter(doc => {
+                    const timestamp = doc.data().timestamp;
+                    if (timestamp && timestamp.toDate) {
+                        return timestamp.toDate() >= today;
+                    }
+                    return false;
+                });
+                document.getElementById('downloadsToday').textContent = todayDownloads.length;
+
+                // Populate users table
+                const tbody = document.getElementById('usersTableBody');
+                tbody.innerHTML = '';
+
+                if (usersSnapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="3" class="text-center text-gray-500 py-8">No users found</td></tr>';
+                } else {
+                    usersSnapshot.forEach(doc => {
+                        const user = doc.data();
+                        const row = tbody.insertRow();
+                        row.insertCell(0).textContent = user.email || 'N/A';
+                        row.insertCell(1).textContent = user.downloadCount || 0;
+                        row.insertCell(2).textContent = user.lastLogin ? 
+                            new Date(user.lastLogin.toDate()).toLocaleDateString() : 'Never';
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load admin data:', e);
+                document.getElementById('usersTableBody').innerHTML = 
+                    '<tr><td colspan="3" class="text-center text-red-500 py-8">Error loading data</td></tr>';
+            }
+        }
+
+        // Login functions
+        function handleLogin() {
+            document.getElementById('loginModal').classList.remove('hidden');
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('loginError').classList.add('hidden');
+        }
+
+        async function handleEmailLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorEl = document.getElementById('loginError');
+
+            if (!email || !password) {
+                errorEl.textContent = 'Please enter email and password';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            const result = await authManager.signInWithEmail(email, password);
+            if (result.success) {
+                closeLoginModal();
+            } else {
+                errorEl.textContent = result.error;
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        async function handleGoogleLogin() {
+            const errorEl = document.getElementById('loginError');
+            const result = await authManager.signInWithGoogle();
+            if (result.success) {
+                closeLoginModal();
+            } else {
+                errorEl.textContent = result.error;
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        async function handleLogout() {
+            await authManager.signOut();
+            window.location.reload();
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            authManager.init();
+        });
+    </script>
+</body>
+</html>
