@@ -3213,134 +3213,73 @@ OpenArea: ${document.getElementById('statArea').innerText}
         
         // Encode data for URL
         const encodedData = encodeURIComponent(btoa(JSON.stringify(designData)));
-        const shareUrl = `https://ppd.ehsanmo.me/?shared=${encodedData}`;
+        const shareUrl = 'https://ppd.ehsanmo.me/?shared=' + encodedData;
         
-        // Create HTML content
-        const htmlContent = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perforated Panel Design - Shareable File</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-        }
-        .container {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 600px;
-            width: 100%;
-            padding: 40px;
-            text-align: center;
-        }
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 24px;
-        }
-        .message {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 16px;
-            line-height: 1.6;
-        }
-        .preview {
-            margin: 30px 0;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            overflow: hidden;
-            max-width: 100%;
-        }
-        .preview img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-        .buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 30px;
-        }
-        button {
-            padding: 12px 30px;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .btn-open {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .btn-open:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-        a.btn-open {
-            padding: 12px 30px;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .btn-close {
-            background: #f0f0f0;
-            color: #333;
-        }
-        .btn-close:hover {
-            background: #e0e0e0;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Perforated Panel Design</h1>
-        <p class="message">Do you want to open this file? You are navigating to <strong>https://ppd.ehsanmo.me/</strong></p>
-        <div class="preview">
-            <img src="${imageData}" alt="Perforated Panel Design Preview">
-        </div>
-        <div class="buttons">
-            <a href="${shareUrl}" target="_blank" class="btn-open">Open</a>
-            <button class="btn-close" onclick="window.close()">Close</button>
-        </div>
-        <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 8px; font-size: 12px; color: #666;">
-            <p style="margin-bottom: 10px;"><strong>Note:</strong> If the button doesn't work, copy and paste this URL into your browser:</p>
-            <input type="text" id="shareUrlInput" value="${shareUrl}" readonly style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 11px; background: white;" onclick="this.select();">
-            <button onclick="copyUrl()" style="margin-top: 8px; padding: 6px 12px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">Copy URL</button>
-        </div>
-    </div>
-    <script>
-        function copyUrl() {
-            const input = document.getElementById('shareUrlInput');
-            input.select();
-            input.setSelectionRange(0, 99999);
-            document.execCommand('copy');
-            alert('URL copied to clipboard!');
-        }
-    </script>
-</body>
-</html>`;
+        // Escape HTML attribute values (for value attribute in input)
+        const escapeHtmlAttr = (str) => {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        };
+        
+        // Create HTML content - build it piece by piece to avoid template literal issues
+        const htmlParts = [];
+        htmlParts.push('<!DOCTYPE html>');
+        htmlParts.push('<html lang="en">');
+        htmlParts.push('<head>');
+        htmlParts.push('    <meta charset="UTF-8">');
+        htmlParts.push('    <meta name="viewport" content="width=device-width, initial-scale=1.0">');
+        htmlParts.push('    <title>Perforated Panel Design - Shareable File</title>');
+        htmlParts.push('    <style>');
+        htmlParts.push('        * { margin: 0; padding: 0; box-sizing: border-box; }');
+        htmlParts.push('        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; }');
+        htmlParts.push('        .container { background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); max-width: 600px; width: 100%; padding: 40px; text-align: center; }');
+        htmlParts.push('        h1 { color: #333; margin-bottom: 20px; font-size: 24px; }');
+        htmlParts.push('        .message { color: #666; margin-bottom: 30px; font-size: 16px; line-height: 1.6; }');
+        htmlParts.push('        .preview { margin: 30px 0; border: 2px solid #e0e0e0; border-radius: 8px; overflow: hidden; max-width: 100%; }');
+        htmlParts.push('        .preview img { width: 100%; height: auto; display: block; }');
+        htmlParts.push('        .buttons { display: flex; gap: 15px; justify-content: center; margin-top: 30px; }');
+        htmlParts.push('        button, a.btn-open { padding: 12px 30px; font-size: 16px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; text-decoration: none; display: inline-block; }');
+        htmlParts.push('        .btn-open { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }');
+        htmlParts.push('        .btn-open:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }');
+        htmlParts.push('        .btn-close { background: #f0f0f0; color: #333; }');
+        htmlParts.push('        .btn-close:hover { background: #e0e0e0; }');
+        htmlParts.push('        .url-section { margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 8px; font-size: 12px; color: #666; }');
+        htmlParts.push('        .url-section input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 11px; background: white; margin-top: 10px; }');
+        htmlParts.push('        .url-section button { margin-top: 8px; padding: 6px 12px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; }');
+        htmlParts.push('    </style>');
+        htmlParts.push('</head>');
+        htmlParts.push('<body>');
+        htmlParts.push('    <div class="container">');
+        htmlParts.push('        <h1>Perforated Panel Design</h1>');
+        htmlParts.push('        <p class="message">Do you want to open this file? You are navigating to <strong>https://ppd.ehsanmo.me/</strong></p>');
+        htmlParts.push('        <div class="preview">');
+        htmlParts.push('            <img src="' + imageData.replace(/"/g, '&quot;') + '" alt="Perforated Panel Design Preview">');
+        htmlParts.push('        </div>');
+        htmlParts.push('        <div class="buttons">');
+        htmlParts.push('            <a href="' + shareUrl.replace(/"/g, '&quot;') + '" target="_blank" class="btn-open">Open</a>');
+        htmlParts.push('            <button class="btn-close" onclick="window.close()">Close</button>');
+        htmlParts.push('        </div>');
+        htmlParts.push('        <div class="url-section">');
+        htmlParts.push('            <p style="margin-bottom: 10px;"><strong>Note:</strong> If the button doesn\'t work, copy and paste this URL into your browser:</p>');
+        htmlParts.push('            <input type="text" id="shareUrlInput" value="' + escapeHtmlAttr(shareUrl) + '" readonly onclick="this.select();">');
+        htmlParts.push('            <button onclick="copyUrl()">Copy URL</button>');
+        htmlParts.push('        </div>');
+        htmlParts.push('    </div>');
+        htmlParts.push('    <script>');
+        htmlParts.push('        function copyUrl() {');
+        htmlParts.push('            var input = document.getElementById("shareUrlInput");');
+        htmlParts.push('            input.select();');
+        htmlParts.push('            input.setSelectionRange(0, 99999);');
+        htmlParts.push('            document.execCommand("copy");');
+        htmlParts.push('            alert("URL copied to clipboard!");');
+        htmlParts.push('        }');
+        htmlParts.push('    <' + '/script>');
+        htmlParts.push('</body>');
+        htmlParts.push('</html>');
+        
+        const htmlContent = htmlParts.join('\n');
         
         // Create blob and download
         const blob = new Blob([htmlContent], { type: 'text/html' });
