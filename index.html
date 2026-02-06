@@ -556,6 +556,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <!-- Admin Config - Load before main script (for superadmin email) -->
     <script src="/admin-config.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perforated panel Designer</title>
@@ -1331,6 +1332,15 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                             </svg>
                         </button>
+                        <button id="downloadZipBtn" onclick="handleDownloadClick('zip');" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-3" disabled>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <span class="font-medium flex-1">All Files (.zip)</span>
+                            <svg id="zipLockIcon" class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:none;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                        </button>
                         <button id="downloadHtmlBtn" onclick="handleDownloadClick('html');" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-3 hidden" disabled>
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.885 12.938 9 12.482 9 12c0-.482-.115-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
@@ -1833,6 +1843,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     const downloadTxtBtn = document.getElementById('downloadTxtBtn');
     const downloadDxfBtn = document.getElementById('downloadDxfBtn');
     const downloadSvgBtn = document.getElementById('downloadSvgBtn');
+    const downloadZipBtn = document.getElementById('downloadZipBtn');
     
     const statsPanel = document.getElementById('stats');
     const ratioDisplay = document.getElementById('ratioDisplay');
@@ -2723,14 +2734,22 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const footerPanels = document.getElementById('footerPanels');
         const footerHoles = document.getElementById('footerHoles');
         const footerOpening = document.getElementById('footerOpening');
+        const footerMinHole = document.getElementById('footerMinHole');
+        const footerMaxHole = document.getElementById('footerMaxHole');
+        const footerSpacing = document.getElementById('footerSpacing');
+        
         if (footerPanels) footerPanels.textContent = sheetDefinitions.length.toString();
         if (footerHoles) footerHoles.textContent = count.toLocaleString();
         if (footerOpening) footerOpening.textContent = ((totalHoleArea / (w*h)) * 100).toFixed(2) + "%";
+        if (footerMinHole) footerMinHole.textContent = inputs.min.value || "0";
+        if (footerMaxHole) footerMaxHole.textContent = inputs.max.value || "0";
+        if (footerSpacing) footerSpacing.textContent = inputs.pitch.value || "0";
         
         downloadImgBtn.disabled = false;
         downloadTxtBtn.disabled = false;
         downloadDxfBtn.disabled = false;
         downloadSvgBtn.disabled = false;
+        if (downloadZipBtn) downloadZipBtn.disabled = false;
         
         if (scale === 1 && panX === 0) zoomFit();
     }
@@ -3235,6 +3254,291 @@ OpenArea: ${document.getElementById('statArea').innerText}
         textLink.click();
     }
     
+    // Helper function to get PNG as data URL
+    function getPNGDataURL() {
+        if (!sourceImage) return null;
+        
+        // Calculate footer height if needed
+        const footerHeight = includeFooterStatsInDownload ? 40 : 0;
+        
+        // Create a temporary canvas to render with/without percentage
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height + footerHeight;
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        // Fill background
+        tempCtx.fillStyle = '#ffffff';
+        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+        
+        // Copy the main canvas
+        tempCtx.drawImage(canvas, 0, 0);
+        
+        // Add percentage if "Show Opening % on Panels" is enabled
+        if (showPercentage) {
+            const pixelScale = canvas.width / parseFloat(inputs.w.value);
+            drawPercentageOverlay(tempCtx, pixelScale, true);
+        }
+        
+        // Add footer statistics if enabled
+        if (includeFooterStatsInDownload) {
+            const stats = getFooterStatistics();
+            tempCtx.save();
+            tempCtx.fillStyle = '#000000';
+            tempCtx.font = '14px sans-serif';
+            tempCtx.textAlign = 'center';
+            tempCtx.textBaseline = 'top';
+            const footerText = `Panels: ${stats.panels} | Holes: ${stats.holes.toLocaleString()} | Opening: ${stats.opening}`;
+            tempCtx.fillText(footerText, tempCanvas.width / 2, canvas.height + 10);
+            tempCtx.restore();
+        }
+        
+        return tempCanvas.toDataURL('image/png');
+    }
+    
+    // Helper function to get TXT content as string
+    function getTXTContent() {
+        const filename = getDownloadFilename();
+        const now = new Date();
+        
+        return `Perforated panel Designer Specification File
+-----------------------------
+Generated: ${now.toLocaleString()}
+FileID: ${filename}
+
+[Global Config]
+TotalWidth: ${inputs.w.value}
+TotalHeight: ${inputs.h.value}
+Pitch: ${inputs.pitch.value}
+Gap: ${inputs.edge.value}
+MinHole: ${inputs.min.value}
+MaxHole: ${inputs.max.value}
+Invert: ${inputs.invert.checked}
+
+[Layout]
+SplitMode: ${splitMode.value}
+SplitsW: ${inputs.splitW.value}
+SplitsH: ${inputs.splitH.value}
+
+[Margins]
+MarginTop: ${inputs.mT.value}
+MarginBottom: ${inputs.mB.value}
+MarginLeft: ${inputs.mL.value}
+MarginRight: ${inputs.mR.value}
+
+[Image Settings]
+ImageFit: ${imgFitMode.value}
+ImageScale: ${inputs.imgScale.value}
+ImagePanX: ${inputs.imgPanX.value}
+ImagePanY: ${inputs.imgPanY.value}
+
+[Stats]
+TotalHoles: ${document.getElementById('statCount').innerText}
+OpenArea: ${document.getElementById('statArea').innerText}
+`;
+    }
+    
+    // Helper function to get DXF content as string
+    function getDXFContent() {
+        if (generatedHoles.length === 0) return null;
+        const totalH = parseFloat(inputs.h.value);
+        const totalW = parseFloat(inputs.w.value);
+
+        // Minimal DXF R12 format - simplest possible for maximum compatibility
+        let dxf = "";
+        
+        // Header - minimal required
+        dxf += "0\nSECTION\n2\nHEADER\n";
+        dxf += "9\n$ACADVER\n1\nAC1009\n";
+        dxf += "0\nENDSEC\n";
+        
+        // Tables - minimal required
+        dxf += "0\nSECTION\n2\nTABLES\n";
+        
+        // Layer table - only layer 0 required
+        dxf += "0\nTABLE\n2\nLAYER\n70\n1\n";
+        dxf += "0\nLAYER\n2\n0\n70\n0\n62\n7\n6\nCONTINUOUS\n";
+        dxf += "0\nENDTAB\n";
+        
+        dxf += "0\nENDSEC\n";
+
+        // Entities section
+        dxf += "0\nSECTION\n2\nENTITIES\n";
+
+        // Draw panel boundaries as simple POLYLINE
+        sheetDefinitions.forEach(s => {
+            dxf += "0\nPOLYLINE\n8\n0\n66\n1\n70\n1\n";
+            dxf += "0\nVERTEX\n8\n0\n10\n" + s.x.toFixed(3) + "\n20\n" + (totalH - s.y).toFixed(3) + "\n";
+            dxf += "0\nVERTEX\n8\n0\n10\n" + (s.x + s.w).toFixed(3) + "\n20\n" + (totalH - s.y).toFixed(3) + "\n";
+            dxf += "0\nVERTEX\n8\n0\n10\n" + (s.x + s.w).toFixed(3) + "\n20\n" + (totalH - (s.y + s.h)).toFixed(3) + "\n";
+            dxf += "0\nVERTEX\n8\n0\n10\n" + s.x.toFixed(3) + "\n20\n" + (totalH - (s.y + s.h)).toFixed(3) + "\n";
+            dxf += "0\nSEQEND\n8\n0\n";
+        });
+        
+        // Draw holes as circles
+        generatedHoles.forEach(h => {
+            const dxfY = totalH - h.y;
+            dxf += "0\nCIRCLE\n8\n0\n";
+            dxf += "10\n" + h.x.toFixed(3) + "\n";
+            dxf += "20\n" + dxfY.toFixed(3) + "\n";
+            dxf += "30\n0.0\n";
+            dxf += "40\n" + h.r.toFixed(3) + "\n";
+        });
+        
+        // Draw percentage text if enabled
+        if (showPercentage && panelStats.length > 0) {
+            panelStats.forEach((stat, idx) => {
+                if (idx < sheetDefinitions.length && stat.panelArea > 0) {
+                    const sheet = sheetDefinitions[idx];
+                    const percentage = stat.panelArea > 0 ? ((stat.openArea / stat.panelArea) * 100).toFixed(1) : "0.0";
+                    const textX = sheet.x + sheet.w / 2;
+                    const textY = totalH - (sheet.y + sheet.h / 2);
+                    
+                    dxf += "0\nTEXT\n8\n0\n";
+                    dxf += "10\n" + textX.toFixed(3) + "\n";
+                    dxf += "20\n" + textY.toFixed(3) + "\n";
+                    dxf += "30\n0.0\n";
+                    dxf += "40\n10.0\n";
+                    dxf += "1\n" + percentage + "%\n";
+                    dxf += "50\n0.0\n";
+                }
+            });
+        }
+        
+        // Add footer statistics if enabled
+        if (includeFooterStatsInDownload) {
+            const stats = getFooterStatistics();
+            const footerY = totalH + 20; // Position below the design
+            const fontSize = 8.0;
+            const startX = totalW / 2 - 100; // Center the text
+            
+            dxf += "0\nTEXT\n8\n0\n";
+            dxf += "10\n" + startX.toFixed(3) + "\n";
+            dxf += "20\n" + footerY.toFixed(3) + "\n";
+            dxf += "30\n0.0\n";
+            dxf += "40\n" + fontSize.toFixed(1) + "\n";
+            dxf += "1\nPanels: " + stats.panels + " | Holes: " + stats.holes.toLocaleString() + " | Opening: " + stats.opening + "\n";
+            dxf += "50\n0.0\n";
+        }
+
+        dxf += "0\nENDSEC\n";
+        dxf += "0\nEOF\n";
+        
+        return dxf;
+    }
+    
+    // Helper function to get SVG content as string
+    function getSVGContent() {
+        if (generatedHoles.length === 0) return null;
+        const totalH = parseFloat(inputs.h.value);
+        const totalW = parseFloat(inputs.w.value);
+        const footerHeight = includeFooterStatsInDownload ? 20 : 0;
+        const svgHeight = totalH + footerHeight;
+        
+        let svg = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        svg += '<svg xmlns="http://www.w3.org/2000/svg" ';
+        svg += `width="${totalW}mm" height="${svgHeight}mm" `;
+        svg += `viewBox="0 0 ${totalW} ${svgHeight}">\n`;
+        svg += '<g transform="translate(0,' + totalH + ') scale(1,-1)">\n'; // Flip Y axis
+        
+        // Draw panel boundaries
+        svg += '<g id="panels" stroke="#0000FF" stroke-width="0.5" fill="none">\n';
+        sheetDefinitions.forEach(s => {
+            svg += `<rect x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}"/>\n`;
+        });
+        svg += '</g>\n';
+        
+        // Draw holes
+        svg += '<g id="holes" fill="#000000">\n';
+        generatedHoles.forEach(h => {
+            svg += `<circle cx="${h.x.toFixed(3)}" cy="${h.y.toFixed(3)}" r="${h.r.toFixed(3)}"/>\n`;
+        });
+        svg += '</g>\n';
+        
+        // Draw percentage text if enabled
+        if (showPercentage && panelStats.length > 0) {
+            svg += '<g id="text" fill="#000000" font-family="Arial" font-size="10" text-anchor="middle">\n';
+            panelStats.forEach((stat, idx) => {
+                if (idx < sheetDefinitions.length && stat.panelArea > 0) {
+                    const sheet = sheetDefinitions[idx];
+                    const percentage = stat.panelArea > 0 ? ((stat.openArea / stat.panelArea) * 100).toFixed(1) : "0.0";
+                    const textX = sheet.x + sheet.w / 2;
+                    const textY = sheet.y + sheet.h / 2;
+                    svg += `<text x="${textX.toFixed(3)}" y="${textY.toFixed(3)}">${percentage}%</text>\n`;
+                }
+            });
+            svg += '</g>\n';
+        }
+        
+        svg += '</g>\n';
+        
+        // Add footer statistics if enabled
+        if (includeFooterStatsInDownload) {
+            const stats = getFooterStatistics();
+            const footerY = totalH + 20; // Position below the design
+            svg += `<text x="${totalW / 2}" y="${footerY}" fill="#000000" font-family="Arial" font-size="8" text-anchor="middle">Panels: ${stats.panels} | Holes: ${stats.holes.toLocaleString()} | Opening: ${stats.opening}</text>\n`;
+        }
+        
+        svg += '</svg>';
+        
+        return svg;
+    }
+    
+    async function downloadZIP() {
+        if (!sourceImage || generatedHoles.length === 0) {
+            alert('Please generate a pattern first.');
+            return;
+        }
+        
+        if (typeof JSZip === 'undefined') {
+            alert('ZIP library not loaded. Please refresh the page.');
+            return;
+        }
+        
+        const filename = getDownloadFilename();
+        const zip = new JSZip();
+        
+        try {
+            // Add PNG file
+            const pngDataURL = getPNGDataURL();
+            if (pngDataURL) {
+                const pngBase64 = pngDataURL.split(',')[1];
+                zip.file(`${filename}.png`, pngBase64, { base64: true });
+            }
+            
+            // Add TXT file
+            const txtContent = getTXTContent();
+            zip.file(`${filename}.txt`, txtContent);
+            
+            // Add DXF file
+            const dxfContent = getDXFContent();
+            if (dxfContent) {
+                zip.file(`${filename}.dxf`, dxfContent);
+            }
+            
+            // Add SVG file
+            const svgContent = getSVGContent();
+            if (svgContent) {
+                zip.file(`${filename}.svg`, svgContent);
+            }
+            
+            // Generate zip file
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+            
+            // Download
+            const link = document.createElement('a');
+            link.download = `${filename}.zip`;
+            link.href = URL.createObjectURL(zipBlob);
+            link.click();
+            
+            // Clean up
+            URL.revokeObjectURL(link.href);
+        } catch (error) {
+            console.error('Error creating ZIP file:', error);
+            alert('Error creating ZIP file. Please try again.');
+        }
+    }
+    
     // ========== AUTHENTICATION SYSTEM ==========
     
     // Firebase Configuration - REPLACE WITH YOUR FIREBASE CONFIG
@@ -3714,6 +4018,7 @@ OpenArea: ${document.getElementById('statArea').innerText}
         const svgBtn = document.getElementById('downloadSvgBtn');
         const dxfLockIcon = document.getElementById('dxfLockIcon');
         const svgLockIcon = document.getElementById('svgLockIcon');
+        const zipLockIcon = document.getElementById('zipLockIcon');
         
         // DXF Button - always visible, show lock for guests
         if (dxfBtn) {
@@ -3746,6 +4051,24 @@ OpenArea: ${document.getElementById('statArea').innerText}
             } else {
                 svgBtn.classList.add('opacity-60', 'cursor-not-allowed');
                 svgBtn.classList.remove('cursor-pointer');
+            }
+        }
+        
+        // ZIP Button - always visible, show lock for guests
+        const zipBtn = document.getElementById('downloadZipBtn');
+        if (zipBtn) {
+            zipBtn.style.display = 'flex';
+            const canDownloadZip = authManager.canDownload('zip');
+            if (zipLockIcon) {
+                zipLockIcon.style.display = canDownloadZip ? 'none' : 'block';
+            }
+            // Update button styling for locked state
+            if (canDownloadZip) {
+                zipBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+                zipBtn.classList.add('cursor-pointer');
+            } else {
+                zipBtn.classList.add('opacity-60', 'cursor-not-allowed');
+                zipBtn.classList.remove('cursor-pointer');
             }
         }
         
@@ -3782,6 +4105,8 @@ OpenArea: ${document.getElementById('statArea').innerText}
             window.downloadDXF();
         } else if (type === 'svg') {
             window.downloadSVG();
+        } else if (type === 'zip') {
+            window.downloadZIP();
         } else if (type === 'html') {
             window.downloadHTML();
         }
@@ -4028,6 +4353,22 @@ OpenArea: ${document.getElementById('statArea').innerText}
         }
     };
     
+    const originalDownloadZIP = downloadZIP;
+    window.downloadZIP = async function() {
+        if (!authManager.canDownload('zip')) {
+            alert('Please register/login to download ZIP files');
+            showAuthModal();
+            return;
+        }
+        await authManager.trackDownload('zip');
+        // Check if there's content to download
+        if (typeof originalDownloadZIP === 'function') {
+            await originalDownloadZIP();
+        } else {
+            alert('No pattern to download. Please generate a pattern first.');
+        }
+    };
+    
     const originalDownloadHTML = downloadHTML;
     window.downloadHTML = async function() {
         if (!authManager.canDownload('html')) {
@@ -4094,6 +4435,15 @@ OpenArea: ${document.getElementById('statArea').innerText}
         </div>
         <div style="padding: 0 10px;">
             <strong>Opening:</strong> <span id="footerOpening">0%</span>
+        </div>
+        <div style="padding: 0 10px;">
+            <strong>Min Hole:</strong> <span id="footerMinHole">0</span>mm
+        </div>
+        <div style="padding: 0 10px;">
+            <strong>Max Hole:</strong> <span id="footerMaxHole">0</span>mm
+        </div>
+        <div style="padding: 0 10px;">
+            <strong>Spacing:</strong> <span id="footerSpacing">0</span>mm
         </div>
         <div style="margin-left: auto; padding: 0 10px;">
             Designed by Ehsan Mokhtary
