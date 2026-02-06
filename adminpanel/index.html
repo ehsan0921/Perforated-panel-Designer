@@ -421,7 +421,7 @@
         };
 
         // Check if user has access
-        function checkAccess() {
+        async function checkAccess() {
             const loadingState = document.getElementById('loadingState');
             const accessDenied = document.getElementById('accessDenied');
             const adminContent = document.getElementById('adminContent');
@@ -437,7 +437,44 @@
             const email = authManager.currentUser.email;
             userEmail.textContent = email;
 
-            if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+            // Check if user is superadmin by email
+            const isSuperAdminByEmail = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+            
+            // Also check isAdmin field in Firestore
+            let isAdminInFirestore = false;
+            if (authManager.db && isSuperAdminByEmail) {
+                try {
+                    const userDoc = await authManager.db.collection('users').doc(authManager.currentUser.uid).get();
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        isAdminInFirestore = userData.isAdmin === true;
+                        
+                        // If superadmin by email but not set in Firestore, set it
+                        if (!isAdminInFirestore) {
+                            await authManager.db.collection('users').doc(authManager.currentUser.uid).update({
+                                isAdmin: true
+                            });
+                            isAdminInFirestore = true;
+                        }
+                    } else {
+                        // Create user document with isAdmin = true if it doesn't exist
+                        await authManager.db.collection('users').doc(authManager.currentUser.uid).set({
+                            email: email,
+                            displayName: authManager.currentUser.displayName || '',
+                            photoURL: authManager.currentUser.photoURL || '',
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                            isAdmin: true,
+                            downloadCount: 0
+                        });
+                        isAdminInFirestore = true;
+                    }
+                } catch (e) {
+                    console.error('Error checking admin status:', e);
+                }
+            }
+
+            if (isSuperAdminByEmail || isAdminInFirestore) {
                 // User has access
                 loadingState.classList.add('hidden');
                 accessDenied.classList.add('hidden');

@@ -3433,7 +3433,34 @@ OpenArea: ${document.getElementById('statArea').innerText}
         
         async signInWithEmail(email, password) {
             try {
-                await this.auth.signInWithEmailAndPassword(email, password);
+                const userCredential = await this.auth.signInWithEmailAndPassword(email, password);
+                
+                // Update user document with lastLogin
+                if (this.db) {
+                    try {
+                        const userDoc = await this.db.collection('users').doc(userCredential.user.uid).get();
+                        if (userDoc.exists) {
+                            // Update lastLogin
+                            await this.db.collection('users').doc(userCredential.user.uid).update({
+                                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        } else {
+                            // Create user document if it doesn't exist
+                            await this.db.collection('users').doc(userCredential.user.uid).set({
+                                email: userCredential.user.email,
+                                displayName: userCredential.user.displayName || '',
+                                photoURL: userCredential.user.photoURL || '',
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                                isAdmin: false,
+                                downloadCount: 0
+                            });
+                        }
+                    } catch (dbError) {
+                        console.warn('Failed to update user document (non-critical):', dbError);
+                    }
+                }
+                
                 await this.trackLogin();
                 return { success: true };
             } catch (error) {
@@ -3576,12 +3603,29 @@ OpenArea: ${document.getElementById('statArea').innerText}
         async trackDownload(fileType) {
             if (!this.currentUser || !this.db) return;
             try {
+                // Ensure user document exists
+                const userDoc = await this.db.collection('users').doc(this.currentUser.uid).get();
+                if (!userDoc.exists) {
+                    await this.db.collection('users').doc(this.currentUser.uid).set({
+                        email: this.currentUser.email,
+                        displayName: this.currentUser.displayName || '',
+                        photoURL: this.currentUser.photoURL || '',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                        isAdmin: false,
+                        downloadCount: 0
+                    });
+                }
+                
+                // Track download
                 await this.db.collection('downloads').add({
                     userId: this.currentUser.uid,
                     email: this.currentUser.email,
                     fileType: fileType,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
+                
+                // Increment download count
                 await this.db.collection('users').doc(this.currentUser.uid).update({
                     downloadCount: firebase.firestore.FieldValue.increment(1)
                 });
