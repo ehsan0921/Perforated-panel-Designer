@@ -2,7 +2,7 @@ name = "perforated-panel-designer"
 compatibility_date = "2024-01-01"
 
 [env.production]
-vars = { ADMIN_USERNAME = "admin", ADMIN_PASSWORD = "change_this_password_in_production" }
+vars = { ADMIN_USERNAME = "admin", ADMIN_PASSWORD = "AdminEhsan092161!@#" }
 
 [env.preview]
-vars = { ADMIN_USERNAME = "admin", ADMIN_PASSWORD = "admin123" }
+vars = { ADMIN_USERNAME = "admin", ADMIN_PASSWORD = "AdminEhsan092161!@#" }
