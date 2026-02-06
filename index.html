@@ -550,6 +550,10 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
   });
 
 })();</script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HoleMapper - Perforated Panel Designer</title>
@@ -933,6 +937,194 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             margin-top: 2px;
         }
         
+        /* Auth UI Styles */
+        .auth-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: var(--panel-bg);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+        }
+        
+        .auth-btn {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: white;
+        }
+        
+        .auth-btn:hover {
+            background: var(--bg);
+        }
+        
+        .auth-btn.primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .auth-btn.primary:hover {
+            background: var(--primary-hover);
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 400px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        
+        .modal-close {
+            float: right;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #64748b;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+        }
+        
+        .error-message {
+            color: #ef4444;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+        
+        .auth-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .auth-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 0.9rem;
+            color: #64748b;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+        
+        .auth-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .admin-panel {
+            max-width: 800px;
+            width: 90%;
+        }
+        
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+        
+        .stat-card .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .users-table th,
+        .users-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .users-table th {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+        
         /* Slider Styles */
         .slider-container {
             margin-top: 10px;
@@ -1076,6 +1268,119 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     </style>
 </head>
 <body>
+
+<!-- Auth Header -->
+<div class="auth-header">
+    <div class="user-info" id="userInfo" style="display:none;">
+        <span id="userEmail"></span>
+        <button class="auth-btn" onclick="authManager.signOut()">Logout</button>
+    </div>
+    <div class="user-info" id="guestInfo">
+        <button class="auth-btn primary" onclick="showAuthModal()">Login / Register</button>
+    </div>
+    <button class="auth-btn" id="adminBtn" onclick="showAdminPanel()" style="display:none;">Admin Panel</button>
+</div>
+
+<!-- Auth Modal -->
+<div id="authModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Authentication</h2>
+            <span class="modal-close" onclick="closeAuthModal()">&times;</span>
+        </div>
+        <div class="auth-tabs">
+            <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+            <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+        </div>
+        <div id="loginForm">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="Password">
+            </div>
+            <div class="error-message" id="loginError"></div>
+            <button class="btn-primary" style="width:100%; margin-top:10px;" onclick="handleLogin()">Login</button>
+            <button class="btn-secondary" style="width:100%; margin-top:10px;" onclick="handleGoogleLogin()">Login with Google</button>
+            <button class="link-btn" style="width:100%; margin-top:10px; text-align:center;" onclick="switchAuthTab('forgot')">Forgot Password?</button>
+        </div>
+        <div id="registerForm" style="display:none;">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="registerEmail" placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="registerPassword" placeholder="Min 6 characters">
+            </div>
+            <div class="error-message" id="registerError"></div>
+            <button class="btn-primary" style="width:100%; margin-top:10px;" onclick="handleRegister()">Register</button>
+            <button class="btn-secondary" style="width:100%; margin-top:10px;" onclick="handleGoogleLogin()">Register with Google</button>
+        </div>
+        <div id="forgotForm" style="display:none;">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="forgotEmail" placeholder="your@email.com">
+            </div>
+            <div class="error-message" id="forgotError"></div>
+            <div class="error-message" id="forgotSuccess" style="color:green;"></div>
+            <button class="btn-primary" style="width:100%; margin-top:10px;" onclick="handleForgotPassword()">Send Reset Link</button>
+            <button class="link-btn" style="width:100%; margin-top:10px; text-align:center;" onclick="switchAuthTab('login')">Back to Login</button>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Panel Modal -->
+<div id="adminModal" class="modal">
+    <div class="modal-content admin-panel">
+        <div class="modal-header">
+            <h2>Admin Panel</h2>
+            <span class="modal-close" onclick="closeAdminPanel()">&times;</span>
+        </div>
+        <div id="adminLoginForm">
+            <div class="form-group">
+                <label>Admin Username</label>
+                <input type="text" id="adminUsername" placeholder="Username">
+            </div>
+            <div class="form-group">
+                <label>Admin Password</label>
+                <input type="password" id="adminPassword" placeholder="Password">
+            </div>
+            <div class="error-message" id="adminLoginError"></div>
+            <button class="btn-primary" style="width:100%;" onclick="handleAdminLogin()">Login</button>
+        </div>
+        <div id="adminPanelContent" style="display:none;">
+            <div class="admin-stats">
+                <div class="stat-card">
+                    <h3>Total Users</h3>
+                    <div class="value" id="totalUsers">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Downloads</h3>
+                    <div class="value" id="totalDownloads">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Downloads Today</h3>
+                    <div class="value" id="downloadsToday">0</div>
+                </div>
+            </div>
+            <h3>Users</h3>
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Downloads</th>
+                        <th>Last Login</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
 <aside>
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
@@ -1527,10 +1832,10 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     importFile.addEventListener('change', handleImportConfig);
     generateBtn.addEventListener('click', generatePerforation);
     
-    downloadImgBtn.addEventListener('click', downloadImage);
-    downloadTxtBtn.addEventListener('click', downloadSpecs);
-    downloadDxfBtn.addEventListener('click', downloadDXF);
-    downloadSvgBtn.addEventListener('click', downloadSVG);
+    downloadImgBtn.addEventListener('click', () => downloadImage());
+    downloadTxtBtn.addEventListener('click', () => downloadSpecs());
+    downloadDxfBtn.addEventListener('click', () => downloadDXF());
+    downloadSvgBtn.addEventListener('click', () => downloadSVG());
     
     imgFitMode.addEventListener('change', () => {
         toggleImgControls();
@@ -2358,6 +2663,451 @@ OpenArea: ${document.getElementById('statArea').innerText}
         textLink.href = URL.createObjectURL(blob);
         textLink.click();
     }
+    
+    // ========== AUTHENTICATION SYSTEM ==========
+    
+    // Firebase Configuration - REPLACE WITH YOUR FIREBASE CONFIG
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+    
+    // Initialize Firebase
+    if (typeof firebase !== 'undefined') {
+        firebase.initializeApp(firebaseConfig);
+    }
+    
+    // Auth Manager
+    const authManager = {
+        auth: null,
+        db: null,
+        currentUser: null,
+        isAdmin: false,
+        adminUsername: 'admin', // Will be set from environment
+        adminPassword: 'admin123', // Will be set from environment
+        
+        init() {
+            if (typeof firebase === 'undefined') {
+                console.warn('Firebase not loaded. Auth features disabled.');
+                return;
+            }
+            
+            this.auth = firebase.auth();
+            this.db = firebase.firestore();
+            
+            // Check admin credentials from environment (Cloudflare Pages)
+            // For now, using defaults - will be overridden by env vars in production
+            if (window.ADMIN_USERNAME) this.adminUsername = window.ADMIN_USERNAME;
+            if (window.ADMIN_PASSWORD) this.adminPassword = window.ADMIN_PASSWORD;
+            
+            // Listen for auth state changes
+            this.auth.onAuthStateChanged((user) => {
+                this.currentUser = user;
+                this.checkAdminStatus();
+                updateAuthUI();
+            });
+            
+            // Check admin session
+            this.checkAdminSession();
+        },
+        
+        async checkAdminStatus() {
+            if (!this.currentUser) {
+                this.isAdmin = false;
+                return;
+            }
+            try {
+                const userDoc = await this.db.collection('users').doc(this.currentUser.uid).get();
+                this.isAdmin = userDoc.exists && userDoc.data().isAdmin === true;
+            } catch (e) {
+                this.isAdmin = false;
+            }
+        },
+        
+        checkAdminSession() {
+            const adminSession = sessionStorage.getItem('adminSession');
+            if (adminSession === 'true') {
+                this.isAdmin = true;
+            }
+        },
+        
+        async signInWithEmail(email, password) {
+            try {
+                await this.auth.signInWithEmailAndPassword(email, password);
+                await this.trackLogin();
+                return { success: true };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        },
+        
+        async signUpWithEmail(email, password) {
+            try {
+                const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
+                await this.db.collection('users').doc(userCredential.user.uid).set({
+                    email: email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    isAdmin: false,
+                    downloadCount: 0
+                });
+                await this.trackLogin();
+                return { success: true };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        },
+        
+        async signInWithGoogle() {
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                const userCredential = await this.auth.signInWithPopup(provider);
+                const userDoc = await this.db.collection('users').doc(userCredential.user.uid).get();
+                if (!userDoc.exists) {
+                    await this.db.collection('users').doc(userCredential.user.uid).set({
+                        email: userCredential.user.email,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        isAdmin: false,
+                        downloadCount: 0
+                    });
+                }
+                await this.trackLogin();
+                return { success: true };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        },
+        
+        async resetPassword(email) {
+            try {
+                await this.auth.sendPasswordResetEmail(email);
+                return { success: true };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        },
+        
+        async signOut() {
+            try {
+                await this.auth.signOut();
+                sessionStorage.removeItem('adminSession');
+                this.currentUser = null;
+                this.isAdmin = false;
+                updateAuthUI();
+                return { success: true };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        },
+        
+        async trackLogin() {
+            if (!this.currentUser) return;
+            try {
+                await this.db.collection('loginLogs').add({
+                    userId: this.currentUser.uid,
+                    email: this.currentUser.email,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch (e) {
+                console.error('Failed to track login:', e);
+            }
+        },
+        
+        async trackDownload(fileType) {
+            if (!this.currentUser) return;
+            try {
+                await this.db.collection('downloads').add({
+                    userId: this.currentUser.uid,
+                    email: this.currentUser.email,
+                    fileType: fileType,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                await this.db.collection('users').doc(this.currentUser.uid).update({
+                    downloadCount: firebase.firestore.FieldValue.increment(1)
+                });
+            } catch (e) {
+                console.error('Failed to track download:', e);
+            }
+        },
+        
+        async adminLogin(username, password) {
+            if (username === this.adminUsername && password === this.adminPassword) {
+                sessionStorage.setItem('adminSession', 'true');
+                this.isAdmin = true;
+                updateAuthUI();
+                return { success: true };
+            }
+            return { success: false, error: 'Invalid admin credentials' };
+        },
+        
+        canDownload(fileType) {
+            if (!this.currentUser) {
+                return fileType === 'png' || fileType === 'txt';
+            }
+            return true;
+        }
+    };
+    
+    // Auth UI Functions
+    function updateAuthUI() {
+        const userInfo = document.getElementById('userInfo');
+        const guestInfo = document.getElementById('guestInfo');
+        const userEmail = document.getElementById('userEmail');
+        const adminBtn = document.getElementById('adminBtn');
+        
+        if (authManager.currentUser) {
+            userInfo.style.display = 'flex';
+            guestInfo.style.display = 'none';
+            userEmail.textContent = authManager.currentUser.email;
+            adminBtn.style.display = authManager.isAdmin ? 'block' : 'none';
+        } else {
+            userInfo.style.display = 'none';
+            guestInfo.style.display = 'flex';
+            adminBtn.style.display = 'none';
+        }
+        
+        // Update download button visibility
+        updateDownloadButtons();
+    }
+    
+    function updateDownloadButtons() {
+        downloadDxfBtn.style.display = authManager.canDownload('dxf') ? 'block' : 'none';
+        downloadSvgBtn.style.display = authManager.canDownload('svg') ? 'block' : 'none';
+    }
+    
+    function showAuthModal() {
+        document.getElementById('authModal').classList.add('active');
+        switchAuthTab('login');
+    }
+    
+    function closeAuthModal() {
+        document.getElementById('authModal').classList.remove('active');
+    }
+    
+    function switchAuthTab(tab) {
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+        document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+        document.getElementById('forgotForm').style.display = tab === 'forgot' ? 'block' : 'none';
+        
+        if (tab === 'login') document.querySelectorAll('.auth-tab')[0].classList.add('active');
+        if (tab === 'register') document.querySelectorAll('.auth-tab')[1].classList.add('active');
+        
+        // Clear errors
+        document.querySelectorAll('.error-message').forEach(e => {
+            e.classList.remove('show');
+            e.textContent = '';
+        });
+    }
+    
+    async function handleLogin() {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        const errorEl = document.getElementById('loginError');
+        
+        const result = await authManager.signInWithEmail(email, password);
+        if (result.success) {
+            closeAuthModal();
+        } else {
+            errorEl.textContent = result.error;
+            errorEl.classList.add('show');
+        }
+    }
+    
+    async function handleRegister() {
+        const email = document.getElementById('registerEmail').value;
+        const password = document.getElementById('registerPassword').value;
+        const errorEl = document.getElementById('registerError');
+        
+        if (password.length < 6) {
+            errorEl.textContent = 'Password must be at least 6 characters';
+            errorEl.classList.add('show');
+            return;
+        }
+        
+        const result = await authManager.signUpWithEmail(email, password);
+        if (result.success) {
+            closeAuthModal();
+        } else {
+            errorEl.textContent = result.error;
+            errorEl.classList.add('show');
+        }
+    }
+    
+    async function handleGoogleLogin() {
+        const result = await authManager.signInWithGoogle();
+        if (result.success) {
+            closeAuthModal();
+        } else {
+            alert('Google login failed: ' + result.error);
+        }
+    }
+    
+    async function handleForgotPassword() {
+        const email = document.getElementById('forgotEmail').value;
+        const errorEl = document.getElementById('forgotError');
+        const successEl = document.getElementById('forgotSuccess');
+        
+        const result = await authManager.resetPassword(email);
+        if (result.success) {
+            successEl.textContent = 'Password reset email sent!';
+            successEl.classList.add('show');
+            errorEl.classList.remove('show');
+        } else {
+            errorEl.textContent = result.error;
+            errorEl.classList.add('show');
+            successEl.classList.remove('show');
+        }
+    }
+    
+    // Admin Panel Functions
+    function showAdminPanel() {
+        document.getElementById('adminModal').classList.add('active');
+        if (!authManager.isAdmin) {
+            document.getElementById('adminLoginForm').style.display = 'block';
+            document.getElementById('adminPanelContent').style.display = 'none';
+        } else {
+            loadAdminData();
+        }
+    }
+    
+    function closeAdminPanel() {
+        document.getElementById('adminModal').classList.remove('active');
+    }
+    
+    async function handleAdminLogin() {
+        const username = document.getElementById('adminUsername').value;
+        const password = document.getElementById('adminPassword').value;
+        const errorEl = document.getElementById('adminLoginError');
+        
+        const result = await authManager.adminLogin(username, password);
+        if (result.success) {
+            document.getElementById('adminLoginForm').style.display = 'none';
+            document.getElementById('adminPanelContent').style.display = 'block';
+            loadAdminData();
+        } else {
+            errorEl.textContent = result.error;
+            errorEl.classList.add('show');
+        }
+    }
+    
+    async function loadAdminData() {
+        if (!authManager.isAdmin || !authManager.db) return;
+        
+        try {
+            // Get total users
+            const usersSnapshot = await authManager.db.collection('users').get();
+            document.getElementById('totalUsers').textContent = usersSnapshot.size;
+            
+            // Get total downloads
+            const downloadsSnapshot = await authManager.db.collection('downloads').get();
+            document.getElementById('totalDownloads').textContent = downloadsSnapshot.size;
+            
+            // Get downloads today
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayDownloads = downloadsSnapshot.docs.filter(doc => {
+                const timestamp = doc.data().timestamp;
+                if (timestamp && timestamp.toDate) {
+                    return timestamp.toDate() >= today;
+                }
+                return false;
+            });
+            document.getElementById('downloadsToday').textContent = todayDownloads.length;
+            
+            // Populate users table
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+            usersSnapshot.forEach(doc => {
+                const user = doc.data();
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = user.email || 'N/A';
+                row.insertCell(1).textContent = user.downloadCount || 0;
+                row.insertCell(2).textContent = user.lastLogin ? 
+                    new Date(user.lastLogin.toDate()).toLocaleDateString() : 'Never';
+            });
+        } catch (e) {
+            console.error('Failed to load admin data:', e);
+        }
+    }
+    
+    // Wrap download functions to check permissions and track downloads
+    const originalDownloadImage = downloadImage;
+    window.downloadImage = async function() {
+        if (!authManager.canDownload('png')) {
+            alert('Please login to download PNG files');
+            showAuthModal();
+            return;
+        }
+        if (authManager.currentUser) {
+            await authManager.trackDownload('png');
+        }
+        originalDownloadImage();
+    };
+    
+    const originalDownloadSpecs = downloadSpecs;
+    window.downloadSpecs = async function() {
+        if (!authManager.canDownload('txt')) {
+            alert('Please login to download settings files');
+            showAuthModal();
+            return;
+        }
+        if (authManager.currentUser) {
+            await authManager.trackDownload('txt');
+        }
+        originalDownloadSpecs();
+    };
+    
+    const originalDownloadDXF = downloadDXF;
+    window.downloadDXF = async function() {
+        if (!authManager.canDownload('dxf')) {
+            alert('Please register/login to download DXF files');
+            showAuthModal();
+            return;
+        }
+        await authManager.trackDownload('dxf');
+        originalDownloadDXF();
+    };
+    
+    const originalDownloadSVG = downloadSVG;
+    window.downloadSVG = async function() {
+        if (!authManager.canDownload('svg')) {
+            alert('Please register/login to download SVG files');
+            showAuthModal();
+            return;
+        }
+        await authManager.trackDownload('svg');
+        originalDownloadSVG();
+    };
+    
+    // Initialize auth on page load
+    if (typeof firebase !== 'undefined') {
+        authManager.init();
+    } else {
+        // Wait for Firebase to load
+        window.addEventListener('load', () => {
+            if (typeof firebase !== 'undefined') {
+                authManager.init();
+            }
+        });
+    }
+    
+    // Make authManager globally available
+    window.authManager = authManager;
+    window.updateAuthUI = updateAuthUI;
+    window.showAuthModal = showAuthModal;
+    window.closeAuthModal = closeAuthModal;
+    window.switchAuthTab = switchAuthTab;
+    window.handleLogin = handleLogin;
+    window.handleRegister = handleRegister;
+    window.handleGoogleLogin = handleGoogleLogin;
+    window.handleForgotPassword = handleForgotPassword;
+    window.showAdminPanel = showAdminPanel;
+    window.closeAdminPanel = closeAdminPanel;
+    window.handleAdminLogin = handleAdminLogin;
 </script>
 
 

@@ -1,0 +1,12 @@
+{
+  "name": "perforated-panel-designer",
+  "version": "1.0.0",
+  "description": "Perforated Panel Designer - Client-side tool",
+  "scripts": {
+    "dev": "wrangler pages dev",
+    "deploy": "wrangler pages deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
