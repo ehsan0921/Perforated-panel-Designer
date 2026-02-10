@@ -996,6 +996,35 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             cursor: pointer;
             color: #64748b;
         }
+
+        /* Toast notification */
+        #toastContainer {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+        .toast {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: toastIn 0.3s ease;
+            pointer-events: auto;
+        }
+        .toast.success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; }
+        .toast.error { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #fff; }
+        .toast.info { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff; }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         
         .form-group {
             margin-bottom: 15px;
@@ -1279,6 +1308,15 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                     </svg>
                     Upload Photo
                 </button>
+
+                <!-- View raw photo (input image only) -->
+                <button id="viewRawPhotoBtn" onclick="window.openRawPhotoModal && window.openRawPhotoModal()" class="px-4 py-2 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 rounded-lg hover:from-slate-200 hover:to-slate-300 transition-all text-sm font-medium flex items-center gap-2 shadow-sm border border-slate-300" title="View uploaded image before pattern">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                    View raw photo
+                </button>
                 
                 <!-- Import Settings -->
                 <button onclick="document.getElementById('importFile').click()" class="px-4 py-2 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 rounded-lg hover:from-gray-200 hover:to-gray-300 transition-all text-sm font-medium flex items-center gap-2 shadow-sm hover:shadow border border-gray-300">
@@ -1398,6 +1436,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         </div>
     </div>
 </header>
+
+<div id="toastContainer" aria-live="polite"></div>
 
         <!-- Change Password Modal -->
 <div id="changePasswordModal" class="modal">
@@ -1522,6 +1562,20 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 <tbody id="usersTableBody">
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- Raw photo modal (input image only, no pattern) -->
+<div id="rawPhotoModal" class="modal">
+    <div class="modal-content" style="max-width:90vw; max-height:90vh; display:flex; flex-direction:column;">
+        <div class="modal-header">
+            <h2>Raw photo (input only)</h2>
+            <span class="modal-close" onclick="window.closeRawPhotoModal && window.closeRawPhotoModal()">&times;</span>
+        </div>
+        <div style="flex:1; min-height:200px; display:flex; align-items:center; justify-content:center; background:#f1f5f9; border-radius:8px;">
+            <canvas id="rawPhotoCanvas" style="max-width:100%; max-height:75vh; object-fit:contain;"></canvas>
+            <p id="rawPhotoPlaceholder" style="display:none; color:#64748b;">No image loaded. Upload a photo first.</p>
         </div>
     </div>
 </div>
@@ -2560,7 +2614,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             toggleImgControls();
             saveSettings();
             generatePerforation();
-            alert("Settings imported!");
+            if (typeof showNotification === 'function') showNotification('Settings imported!', 'success');
         };
         reader.readAsText(file);
         // Reset input
@@ -2709,6 +2763,44 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         return swapColors
             ? { holeColor: panel, panelColor: hole }
             : { holeColor: hole, panelColor: panel };
+    }
+
+    function showNotification(message, type) {
+        type = type || 'info';
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = 'toast ' + type;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(function() {
+            if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 3000);
+    }
+
+    function openRawPhotoModal() {
+        const modal = document.getElementById('rawPhotoModal');
+        const rawCanvas = document.getElementById('rawPhotoCanvas');
+        const placeholder = document.getElementById('rawPhotoPlaceholder');
+        if (!modal || !rawCanvas || !placeholder) return;
+        if (!sourceImage) {
+            showNotification('No image loaded. Upload a photo first.', 'info');
+            return;
+        }
+        const w = sourceImage.naturalWidth;
+        const h = sourceImage.naturalHeight;
+        rawCanvas.width = w;
+        rawCanvas.height = h;
+        const rctx = rawCanvas.getContext('2d');
+        rctx.drawImage(sourceImage, 0, 0);
+        placeholder.style.display = 'none';
+        rawCanvas.style.display = 'block';
+        modal.classList.add('active');
+    }
+
+    function closeRawPhotoModal() {
+        const modal = document.getElementById('rawPhotoModal');
+        if (modal) modal.classList.remove('active');
     }
 
     function generatePerforation() {
@@ -4460,6 +4552,9 @@ OpenArea: ${document.getElementById('statArea').innerText}
     window.closeChangePasswordModal = closeChangePasswordModal;
     window.handleChangePassword = handleChangePassword;
     window.toggleDownloadsMenu = toggleDownloadsMenu;
+    window.openRawPhotoModal = openRawPhotoModal;
+    window.closeRawPhotoModal = closeRawPhotoModal;
+    window.showNotification = showNotification;
     window.handleDownloadClick = handleDownloadClick;
 </script>
 
