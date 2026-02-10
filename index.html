@@ -1679,6 +1679,21 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             <span>Invert (Darker = Smaller Hole)</span>
         </label>
     </div>
+
+    <div class="control-group">
+        <label>Colors</label>
+        <div class="row">
+            <div>
+                <label style="font-size:0.75rem;">Hole Color</label>
+                <input type="color" id="holeColor" value="#000000" style="width:100%;">
+            </div>
+            <div>
+                <label style="font-size:0.75rem;">Panel Color</label>
+                <input type="color" id="panelColor" value="#ffffff" style="width:100%;">
+            </div>
+        </div>
+        <small>Default is black holes on white panel. Invert swaps mapping and visual colors.</small>
+    </div>
     
     <h2>Panel Alignment</h2>
     <div class="control-group">
@@ -1870,9 +1885,11 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     const percentageSizeValue = document.getElementById('percentageSizeValue');
     const percentageSizeContainer = document.getElementById('percentageSizeContainer');
 
-    // Project Name
+    // Project Name & Color Controls
     const projectNameInput = document.getElementById('projectName');
     const resetSettingsBtn = document.getElementById('resetSettingsBtn');
+    const holeColorInput = document.getElementById('holeColor');
+    const panelColorInput = document.getElementById('panelColor');
 
     // Inputs
     const inputs = {
@@ -1933,7 +1950,9 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             panelAlignment: panelAlignment,
             showPercentage: showPercentage,
             percentageSize: percentageSize,
-            includeFooterStatsInDownload: includeFooterStatsInDownload
+            includeFooterStatsInDownload: includeFooterStatsInDownload,
+            holeColor: holeColorInput && holeColorInput.value ? holeColorInput.value : '#000000',
+            panelColor: panelColorInput && panelColorInput.value ? panelColorInput.value : '#ffffff'
         };
         localStorage.setItem('holemapper_settings_v3', JSON.stringify(settings));
     }
@@ -1957,6 +1976,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 if(s.mB !== undefined) inputs.mB.value = s.mB;
                 if(s.mL !== undefined) inputs.mL.value = s.mL;
                 if(s.mR !== undefined) inputs.mR.value = s.mR;
+                if(s.holeColor && holeColorInput) holeColorInput.value = s.holeColor;
+                if(s.panelColor && panelColorInput) panelColorInput.value = s.panelColor;
                 if(s.imgFit) imgFitMode.value = s.imgFit;
                 if(s.imgScale) inputs.imgScale.value = s.imgScale;
                 if(s.imgPanX) inputs.imgPanX.value = s.imgPanX;
@@ -2036,6 +2057,14 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         if (inputs.imgScale) inputs.imgScale.value = inputs.imgScale.defaultValue;
         if (inputs.imgPanX) inputs.imgPanX.value = inputs.imgPanX.defaultValue;
         if (inputs.imgPanY) inputs.imgPanY.value = inputs.imgPanY.defaultValue;
+
+        // Reset colors to defaults
+        if (holeColorInput) holeColorInput.value = '#000000';
+        if (panelColorInput) panelColorInput.value = '#ffffff';
+
+        // Reset colors to defaults
+        if (holeColorInput) holeColorInput.value = '#000000';
+        if (panelColorInput) panelColorInput.value = '#ffffff';
 
         // Reset invert checkbox
         if (inputs.invert) {
@@ -2358,6 +2387,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     // Auto-save & Refresh triggers
     const allInputs = Object.values(inputs);
     allInputs.push(lockRatioCheckbox, lockPitchRadio, lockGapRadio, splitMode);
+    if (holeColorInput) allInputs.push(holeColorInput);
+    if (panelColorInput) allInputs.push(panelColorInput);
     
     allInputs.forEach(el => {
         el.addEventListener('change', () => {
@@ -2605,6 +2636,16 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         return { offsetX, offsetY };
     }
 
+    function getEffectiveColors(invert) {
+        const defaultHole = '#000000';
+        const defaultPanel = '#ffffff';
+        const hole = (holeColorInput && holeColorInput.value) ? holeColorInput.value : defaultHole;
+        const panel = (panelColorInput && panelColorInput.value) ? panelColorInput.value : defaultPanel;
+        return invert
+            ? { holeColor: panel, panelColor: hole }
+            : { holeColor: hole, panelColor: panel };
+    }
+
     function generatePerforation() {
         if (!sourceImage) return;
 
@@ -2655,6 +2696,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     }
 
     function render(w, h, pitch, minDia, maxDia, invert) {
+        const colors = getEffectiveColors(invert);
         // Canvas setup
         let pixelScale = CONFIG.baseScale;
         const targetW = w * pixelScale;
@@ -2669,7 +2711,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         canvas.height = h * pixelScale;
 
         // Draw Panel Background
-        ctx.fillStyle = "white"; 
+        ctx.fillStyle = colors.panelColor; 
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         // Visual Sheets
@@ -2732,7 +2774,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const mL = parseFloat(inputs.mL.value) || 0;
         const mR = parseFloat(inputs.mR.value) || 0;
 
-        ctx.fillStyle = "black";
+        ctx.fillStyle = colors.holeColor;
         
         let count = 0;
         let totalHoleArea = 0;
@@ -3024,6 +3066,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     function downloadImage() {
         if (!sourceImage) return;
         const filename = getDownloadFilename();
+        const invert = inputs.invert.checked;
+        const colors = getEffectiveColors(invert);
         
         // Calculate footer height if needed
         const footerHeight = includeFooterStatsInDownload ? 50 : 0;
@@ -3035,7 +3079,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const tempCtx = tempCanvas.getContext('2d');
         
         // Fill background
-        tempCtx.fillStyle = '#ffffff';
+        tempCtx.fillStyle = colors.panelColor;
         tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
         
         // Copy the main canvas
@@ -3073,11 +3117,15 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const totalW = parseFloat(inputs.w.value);
         const footerHeight = includeFooterStatsInDownload ? 20 : 0;
         const svgHeight = totalH + footerHeight;
+        const invert = inputs.invert.checked;
+        const colors = getEffectiveColors(invert);
         
         let svg = '<?xml version="1.0" encoding="UTF-8"?>\n';
         svg += '<svg xmlns="http://www.w3.org/2000/svg" ';
         svg += `width="${totalW}mm" height="${svgHeight}mm" `;
         svg += `viewBox="0 0 ${totalW} ${svgHeight}">\n`;
+        // Panel background (unflipped, in drawing coordinates)
+        svg += `<rect width="${totalW}" height="${totalH}" fill="${colors.panelColor}"/>\n`;
         svg += '<g transform="translate(0,' + totalH + ') scale(1,-1)">\n'; // Flip Y axis
         
         // Draw panel boundaries
@@ -3088,7 +3136,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         svg += '</g>\n';
         
         // Draw holes
-        svg += '<g id="holes" fill="#000000">\n';
+        svg += `<g id="holes" fill="${colors.holeColor}">\n`;
         generatedHoles.forEach(h => {
             svg += `<circle cx="${h.x.toFixed(3)}" cy="${h.y.toFixed(3)}" r="${h.r.toFixed(3)}"/>\n`;
         });
@@ -3178,6 +3226,8 @@ OpenArea: ${document.getElementById('statArea').innerText}
     // Helper function to get PNG as data URL
     function getPNGDataURL() {
         if (!sourceImage) return null;
+        const invert = inputs.invert.checked;
+        const colors = getEffectiveColors(invert);
         
         // Calculate footer height if needed
         const footerHeight = includeFooterStatsInDownload ? 50 : 0;
@@ -3189,7 +3239,7 @@ OpenArea: ${document.getElementById('statArea').innerText}
         const tempCtx = tempCanvas.getContext('2d');
         
         // Fill background
-        tempCtx.fillStyle = '#ffffff';
+        tempCtx.fillStyle = colors.panelColor;
         tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
         
         // Copy the main canvas
@@ -3355,11 +3405,15 @@ OpenArea: ${document.getElementById('statArea').innerText}
         const totalW = parseFloat(inputs.w.value);
         const footerHeight = includeFooterStatsInDownload ? 20 : 0;
         const svgHeight = totalH + footerHeight;
+        const invert = inputs.invert.checked;
+        const colors = getEffectiveColors(invert);
         
         let svg = '<?xml version="1.0" encoding="UTF-8"?>\n';
         svg += '<svg xmlns="http://www.w3.org/2000/svg" ';
         svg += `width="${totalW}mm" height="${svgHeight}mm" `;
         svg += `viewBox="0 0 ${totalW} ${svgHeight}">\n`;
+        // Panel background (unflipped, in drawing coordinates)
+        svg += `<rect width="${totalW}" height="${totalH}" fill="${colors.panelColor}"/>\n`;
         svg += '<g transform="translate(0,' + totalH + ') scale(1,-1)">\n'; // Flip Y axis
         
         // Draw panel boundaries
@@ -3370,7 +3424,7 @@ OpenArea: ${document.getElementById('statArea').innerText}
         svg += '</g>\n';
         
         // Draw holes
-        svg += '<g id="holes" fill="#000000">\n';
+        svg += `<g id="holes" fill="${colors.holeColor}">\n`;
         generatedHoles.forEach(h => {
             svg += `<circle cx="${h.x.toFixed(3)}" cy="${h.y.toFixed(3)}" r="${h.r.toFixed(3)}"/>\n`;
         });
