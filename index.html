@@ -1530,16 +1530,19 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 <div class="main-wrapper">
 <!-- Hidden file inputs for navbar buttons -->
 <input type="file" id="fileInput" accept="image/*" style="display:none">
-<input type="file" id="importFile" accept=".txt" style="display:none">
+        <input type="file" id="importFile" accept=".txt" style="display:none">
 
 <aside>
     <div style="margin-bottom:20px;">
         <h2 style="margin:0; font-size:1.2rem;">Design Controls</h2>
     </div>
-    
+
     <div class="control-group sub-control-panel">
         <label style="margin-bottom:8px">Project Name</label>
         <input type="text" id="projectName" placeholder="Enter project name" style="width:100%; padding:6px; margin-bottom:8px; border:1px solid #e2e8f0; border-radius:4px;">
+        <button type="button" id="resetSettingsBtn" style="margin-top:8px; width:100%; padding:6px; border-radius:4px; border:1px solid #e2e8f0; background:#f9fafb; cursor:pointer;">
+            Reset Settings
+        </button>
     </div>
     
     <div class="control-group sub-control-panel">
@@ -1869,7 +1872,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 
     // Project Name
     const projectNameInput = document.getElementById('projectName');
-    
+    const resetSettingsBtn = document.getElementById('resetSettingsBtn');
+
     // Inputs
     const inputs = {
         w: document.getElementById('panelW'),
@@ -1998,9 +2002,100 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                         includeFooterStatsToggle.classList.toggle('active', includeFooterStatsInDownload);
                     }
                 }
-                
                 toggleImgControls();
             } catch(e) { console.error(e); }
+        }
+    }
+    
+    function resetSettingsAndClearStorage() {
+        // Clear saved settings in local storage
+        try {
+            localStorage.removeItem('holemapper_settings_v3');
+        } catch (e) {
+            console.error('Error clearing saved settings', e);
+        }
+
+        // Reset project name
+        if (projectNameInput) {
+            projectNameInput.value = '';
+        }
+
+        // Reset main numeric/text inputs back to their original defaults
+        if (inputs.w) inputs.w.value = inputs.w.defaultValue;
+        if (inputs.h) inputs.h.value = inputs.h.defaultValue;
+        if (inputs.pitch) inputs.pitch.value = inputs.pitch.defaultValue;
+        if (inputs.edge) inputs.edge.value = inputs.edge.defaultValue;
+        if (inputs.min) inputs.min.value = inputs.min.defaultValue;
+        if (inputs.max) inputs.max.value = inputs.max.defaultValue;
+        if (inputs.splitW) inputs.splitW.value = inputs.splitW.defaultValue;
+        if (inputs.splitH) inputs.splitH.value = inputs.splitH.defaultValue;
+        if (inputs.mT) inputs.mT.value = inputs.mT.defaultValue;
+        if (inputs.mB) inputs.mB.value = inputs.mB.defaultValue;
+        if (inputs.mL) inputs.mL.value = inputs.mL.defaultValue;
+        if (inputs.mR) inputs.mR.value = inputs.mR.defaultValue;
+        if (inputs.imgScale) inputs.imgScale.value = inputs.imgScale.defaultValue;
+        if (inputs.imgPanX) inputs.imgPanX.value = inputs.imgPanX.defaultValue;
+        if (inputs.imgPanY) inputs.imgPanY.value = inputs.imgPanY.defaultValue;
+
+        // Reset invert checkbox
+        if (inputs.invert) {
+            inputs.invert.checked = inputs.invert.defaultChecked;
+        }
+
+        // Reset split mode select
+        if (splitMode && splitMode.options && splitMode.options.length > 0) {
+            splitMode.value = splitMode.options[0].value;
+        }
+
+        // Reset lock options
+        if (lockRatioCheckbox) {
+            lockRatioCheckbox.checked = true;
+        }
+        if (lockPitchRadio && lockGapRadio) {
+            lockPitchRadio.checked = true;
+            lockGapRadio.checked = false;
+        }
+
+        // Reset display options
+        showPercentage = false;
+        if (showPercentageToggle) {
+            showPercentageToggle.classList.remove('active');
+        }
+        if (percentageSizeContainer) {
+            percentageSizeContainer.style.display = 'none';
+        }
+        percentageSize = 100;
+        if (percentageSizeSlider) {
+            percentageSizeSlider.value = 100;
+        }
+        if (percentageSizeValue) {
+            percentageSizeValue.textContent = '100%';
+        }
+
+        // Reset footer stats inclusion
+        includeFooterStatsInDownload = false;
+        if (includeFooterStatsToggle) {
+            includeFooterStatsToggle.classList.remove('active');
+        }
+
+        // Reset alignment to center
+        panelAlignment = 'center';
+        if (alignmentButtons && alignmentButtons.length > 0) {
+            alignmentButtons.forEach(function(btn) {
+                btn.classList.toggle('active', btn.dataset.align === panelAlignment);
+            });
+        }
+
+        // Clear split errors
+        if (errSplitW) errSplitW.textContent = '';
+        if (errSplitH) errSplitH.textContent = '';
+
+        // Re-apply image control visibility
+        toggleImgControls();
+
+        // Re-generate pattern if an image is already loaded
+        if (sourceImage) {
+            generatePerforation();
         }
     }
     
@@ -2121,17 +2216,19 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 
     // Event Listeners
     if (fileInput) {
-    fileInput.addEventListener('change', handleImageUpload);
+        fileInput.addEventListener('change', handleImageUpload);
     } else {
         console.error('fileInput not found');
     }
+
     if (importFile) {
-    importFile.addEventListener('change', handleImportConfig);
+        importFile.addEventListener('change', handleImportConfig);
     } else {
         console.error('importFile not found');
     }
+
     if (generateBtn) {
-    generateBtn.addEventListener('click', generatePerforation);
+        generateBtn.addEventListener('click', generatePerforation);
     }
     
     // Download buttons - these are now in navbar dropdown with onclick handlers
@@ -2190,6 +2287,11 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             saveSettings();
             if (sourceImage) generatePerforation();
         });
+    }
+    
+    // Reset settings button
+    if (resetSettingsBtn) {
+        resetSettingsBtn.addEventListener('click', resetSettingsAndClearStorage);
     }
     
     // Include footer stats in download toggle
@@ -2381,6 +2483,11 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 sourceImage = img;
                 imageAspectRatio = img.naturalWidth / img.naturalHeight;
                 ratioDisplay.innerText = `Image Ratio: ${imageAspectRatio.toFixed(3)}`;
+
+                // When a new photo loads, keep and re-apply the last saved settings
+                if (typeof loadSettings === 'function') {
+                    loadSettings();
+                }
                 
                 if (lockRatioCheckbox.checked) {
                     const currentH = parseFloat(inputs.h.value) || 2000;
@@ -3340,10 +3447,10 @@ OpenArea: ${document.getElementById('statArea').innerText}
             const zipBlob = await zip.generateAsync({ type: 'blob' });
             
             // Download
-            const link = document.createElement('a');
+        const link = document.createElement('a');
             link.download = `${filename}.zip`;
             link.href = URL.createObjectURL(zipBlob);
-            link.click();
+        link.click();
             
             // Clean up
             URL.revokeObjectURL(link.href);
