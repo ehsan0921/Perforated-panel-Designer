@@ -1632,7 +1632,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 
     <h2>Perforation Specs (mm)</h2>
     <div class="control-group">
-        <div class="row">
+        <div class="row" style="align-items:flex-end;">
             <div>
                 <label>Min Hole Ø</label>
                 <input type="number" id="minHole" value="2">
@@ -1640,6 +1640,13 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             <div>
                 <label>Max Hole Ø</label>
                 <input type="number" id="maxHole" value="18">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:4px; margin-bottom:0;">
+                <label style="font-size:0.75rem; color:#64748b; margin:0;">Both</label>
+                <div style="display:flex; gap:4px;">
+                    <button type="button" id="holeSizeDecBtn" title="Decrease both" style="width:36px; height:32px; padding:0; border:1px solid #e2e8f0; border-radius:4px; background:#f8fafc; font-size:1.2rem; line-height:1; cursor:pointer;">−</button>
+                    <button type="button" id="holeSizeIncBtn" title="Increase both" style="width:36px; height:32px; padding:0; border:1px solid #e2e8f0; border-radius:4px; background:#f8fafc; font-size:1.2rem; line-height:1; cursor:pointer;">+</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1692,7 +1699,11 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 <input type="color" id="panelColor" value="#ffffff" style="width:100%;">
             </div>
         </div>
-        <small>Default is black holes on white panel. Invert swaps mapping and visual colors.</small>
+        <div class="toggle-group" style="margin-top:8px;">
+            <label style="margin:0; flex:1;">Invert colors (swap hole &amp; panel)</label>
+            <div class="toggle-switch" id="swapColorsToggle"></div>
+        </div>
+        <small>Invert above only affects hole size mapping. Use this to swap hole/panel colors.</small>
     </div>
     
     <h2>Panel Alignment</h2>
@@ -1881,6 +1892,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     const alignmentButtons = document.querySelectorAll('.align-btn');
     const showPercentageToggle = document.getElementById('showPercentageToggle');
     const includeFooterStatsToggle = document.getElementById('includeFooterStatsToggle');
+    const swapColorsToggle = document.getElementById('swapColorsToggle');
     const percentageSizeSlider = document.getElementById('percentageSizeSlider');
     const percentageSizeValue = document.getElementById('percentageSizeValue');
     const percentageSizeContainer = document.getElementById('percentageSizeContainer');
@@ -1922,6 +1934,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     let percentageSize = 100; // Percentage size multiplier (50-200%)
     let panelStats = []; // Store stats per panel: [{sheetIndex, holeCount, openArea, bounds}]
     let includeFooterStatsInDownload = false; // Include footer statistics in downloaded files 
+    let swapHolePanelColors = false; // Swap hole and panel colors for display/export
 
     // --- LOCAL STORAGE ---
     function saveSettings() {
@@ -1951,6 +1964,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             showPercentage: showPercentage,
             percentageSize: percentageSize,
             includeFooterStatsInDownload: includeFooterStatsInDownload,
+            swapHolePanelColors: swapHolePanelColors,
             holeColor: holeColorInput && holeColorInput.value ? holeColorInput.value : '#000000',
             panelColor: panelColorInput && panelColorInput.value ? panelColorInput.value : '#ffffff'
         };
@@ -2021,6 +2035,12 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                     includeFooterStatsInDownload = s.includeFooterStatsInDownload;
                     if (includeFooterStatsToggle) {
                         includeFooterStatsToggle.classList.toggle('active', includeFooterStatsInDownload);
+                    }
+                }
+                if(s.swapHolePanelColors !== undefined) {
+                    swapHolePanelColors = s.swapHolePanelColors;
+                    if (swapColorsToggle) {
+                        swapColorsToggle.classList.toggle('active', swapHolePanelColors);
                     }
                 }
                 toggleImgControls();
@@ -2105,6 +2125,12 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         includeFooterStatsInDownload = false;
         if (includeFooterStatsToggle) {
             includeFooterStatsToggle.classList.remove('active');
+        }
+
+        // Reset swap colors
+        swapHolePanelColors = false;
+        if (swapColorsToggle) {
+            swapColorsToggle.classList.remove('active');
         }
 
         // Reset alignment to center
@@ -2331,6 +2357,16 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             saveSettings();
         });
     }
+
+    // Swap hole/panel colors toggle
+    if (swapColorsToggle) {
+        swapColorsToggle.addEventListener('click', () => {
+            swapHolePanelColors = !swapHolePanelColors;
+            swapColorsToggle.classList.toggle('active', swapHolePanelColors);
+            saveSettings();
+            if (sourceImage) generatePerforation();
+        });
+    }
     
     // Percentage size slider
     if (percentageSizeSlider && percentageSizeValue) {
@@ -2383,6 +2419,35 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         }
         saveSettings();
     });
+
+    // Min/Max hole size step buttons (+ / −)
+    const holeSizeDecBtn = document.getElementById('holeSizeDecBtn');
+    const holeSizeIncBtn = document.getElementById('holeSizeIncBtn');
+    const holeSizeStep = 1;
+    if (holeSizeDecBtn) {
+        holeSizeDecBtn.addEventListener('click', () => {
+            let minVal = parseFloat(inputs.min.value) || 0;
+            let maxVal = parseFloat(inputs.max.value) || 0;
+            minVal = Math.max(0.5, minVal - holeSizeStep);
+            maxVal = Math.max(minVal, maxVal - holeSizeStep);
+            inputs.min.value = minVal;
+            inputs.max.value = maxVal;
+            saveSettings();
+            if (sourceImage) setTimeout(generatePerforation, 10);
+        });
+    }
+    if (holeSizeIncBtn) {
+        holeSizeIncBtn.addEventListener('click', () => {
+            let minVal = parseFloat(inputs.min.value) || 0;
+            let maxVal = parseFloat(inputs.max.value) || 0;
+            minVal += holeSizeStep;
+            maxVal += holeSizeStep;
+            inputs.min.value = minVal;
+            inputs.max.value = maxVal;
+            saveSettings();
+            if (sourceImage) setTimeout(generatePerforation, 10);
+        });
+    }
 
     // Auto-save & Refresh triggers
     const allInputs = Object.values(inputs);
@@ -2636,12 +2701,12 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         return { offsetX, offsetY };
     }
 
-    function getEffectiveColors(invert) {
+    function getEffectiveColors(swapColors) {
         const defaultHole = '#000000';
         const defaultPanel = '#ffffff';
         const hole = (holeColorInput && holeColorInput.value) ? holeColorInput.value : defaultHole;
         const panel = (panelColorInput && panelColorInput.value) ? panelColorInput.value : defaultPanel;
-        return invert
+        return swapColors
             ? { holeColor: panel, panelColor: hole }
             : { holeColor: hole, panelColor: panel };
     }
@@ -2696,7 +2761,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     }
 
     function render(w, h, pitch, minDia, maxDia, invert) {
-        const colors = getEffectiveColors(invert);
+        const colors = getEffectiveColors(swapHolePanelColors);
         // Canvas setup
         let pixelScale = CONFIG.baseScale;
         const targetW = w * pixelScale;
@@ -3066,8 +3131,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     function downloadImage() {
         if (!sourceImage) return;
         const filename = getDownloadFilename();
-        const invert = inputs.invert.checked;
-        const colors = getEffectiveColors(invert);
+        const colors = getEffectiveColors(swapHolePanelColors);
         
         // Calculate footer height if needed
         const footerHeight = includeFooterStatsInDownload ? 50 : 0;
@@ -3117,9 +3181,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const totalW = parseFloat(inputs.w.value);
         const footerHeight = includeFooterStatsInDownload ? 20 : 0;
         const svgHeight = totalH + footerHeight;
-        const invert = inputs.invert.checked;
-        const colors = getEffectiveColors(invert);
-        
+        const colors = getEffectiveColors(swapHolePanelColors);
+
         let svg = '<?xml version="1.0" encoding="UTF-8"?>\n';
         svg += '<svg xmlns="http://www.w3.org/2000/svg" ';
         svg += `width="${totalW}mm" height="${svgHeight}mm" `;
@@ -3127,21 +3190,21 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         // Panel background (unflipped, in drawing coordinates)
         svg += `<rect width="${totalW}" height="${totalH}" fill="${colors.panelColor}"/>\n`;
         svg += '<g transform="translate(0,' + totalH + ') scale(1,-1)">\n'; // Flip Y axis
-        
+
         // Draw panel boundaries
         svg += '<g id="panels" stroke="#0000FF" stroke-width="0.5" fill="none">\n';
         sheetDefinitions.forEach(s => {
             svg += `<rect x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}"/>\n`;
         });
         svg += '</g>\n';
-        
+
         // Draw holes
         svg += `<g id="holes" fill="${colors.holeColor}">\n`;
         generatedHoles.forEach(h => {
             svg += `<circle cx="${h.x.toFixed(3)}" cy="${h.y.toFixed(3)}" r="${h.r.toFixed(3)}"/>\n`;
         });
         svg += '</g>\n';
-        
+
         // Draw percentage text if enabled
         if (showPercentage && panelStats.length > 0) {
             svg += '<g id="text" fill="#000000" font-family="Arial" font-size="10" text-anchor="middle">\n';
@@ -3156,18 +3219,18 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             });
             svg += '</g>\n';
         }
-        
+
         svg += '</g>\n';
-        
+
         // Add footer statistics if enabled
         if (includeFooterStatsInDownload) {
             const stats = getFooterStatistics();
             const footerY = totalH + 20; // Position below the design
             svg += `<text x="${totalW / 2}" y="${footerY}" fill="#000000" font-family="Arial" font-size="8" text-anchor="middle">Panels: ${stats.panels} | Holes: ${stats.holes.toLocaleString()} | Opening: ${stats.opening} | Min Hole: ${stats.minHole}mm | Max Hole: ${stats.maxHole}mm | Spacing: ${stats.spacing}mm</text>\n`;
         }
-        
+
         svg += '</svg>';
-        
+
         const blob = new Blob([svg], { type: 'image/svg+xml' });
         const link = document.createElement('a');
         link.download = `${filename}.svg`;
@@ -3226,8 +3289,7 @@ OpenArea: ${document.getElementById('statArea').innerText}
     // Helper function to get PNG as data URL
     function getPNGDataURL() {
         if (!sourceImage) return null;
-        const invert = inputs.invert.checked;
-        const colors = getEffectiveColors(invert);
+        const colors = getEffectiveColors(swapHolePanelColors);
         
         // Calculate footer height if needed
         const footerHeight = includeFooterStatsInDownload ? 50 : 0;
@@ -3405,8 +3467,7 @@ OpenArea: ${document.getElementById('statArea').innerText}
         const totalW = parseFloat(inputs.w.value);
         const footerHeight = includeFooterStatsInDownload ? 20 : 0;
         const svgHeight = totalH + footerHeight;
-        const invert = inputs.invert.checked;
-        const colors = getEffectiveColors(invert);
+        const colors = getEffectiveColors(swapHolePanelColors);
         
         let svg = '<?xml version="1.0" encoding="UTF-8"?>\n';
         svg += '<svg xmlns="http://www.w3.org/2000/svg" ';
