@@ -1215,6 +1215,13 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             width: 100% !important;
             background: linear-gradient(90deg, #10b981, #34d399);
         }
+        .footer-progress-inline {
+            min-width: 100px;
+            max-width: 180px;
+        }
+        .footer-progress-bar-inline {
+            height: 4px;
+        }
         
         /* Slider Styles */
         .slider-container {
@@ -2575,6 +2582,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         saveSettings();
     });
     inputs.max.addEventListener('input', () => {
+        ensureMaxGreaterThanOrEqualMin();
         if (lockPitchRadio.checked) {
             const p = parseFloat(inputs.pitch.value) || 0;
             const m = parseFloat(inputs.max.value) || 0;
@@ -2594,6 +2602,23 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         saveSettings();
     });
 
+    // Keep Max Hole >= Min Hole (when user types in either field)
+    function ensureMaxGreaterThanOrEqualMin() {
+        let minVal = parseFloat(inputs.min.value);
+        let maxVal = parseFloat(inputs.max.value);
+        if (isNaN(minVal)) return;
+        if (isNaN(maxVal)) return;
+        if (minVal > maxVal) {
+            inputs.max.value = minVal;
+        }
+        if (maxVal < minVal) {
+            inputs.min.value = maxVal;
+        }
+    }
+    inputs.min.addEventListener('input', () => {
+        ensureMaxGreaterThanOrEqualMin();
+    });
+
     // Min/Max hole size step buttons (+ / −)
     const holeSizeDecBtn = document.getElementById('holeSizeDecBtn');
     const holeSizeIncBtn = document.getElementById('holeSizeIncBtn');
@@ -2608,8 +2633,11 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             inputs.max.value = maxVal;
             ensureValidGap();
             saveSettings();
-            updateFooterSpecsFromInputs();
-            if (sourceImage) setTimeout(generatePerforation, 10);
+            if (sourceImage) {
+                generatePerforation();
+            } else {
+                updateFooterSpecsFromInputs();
+            }
         });
     }
     if (holeSizeIncBtn) {
@@ -2617,13 +2645,16 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             let minVal = parseFloat(inputs.min.value) || 0;
             let maxVal = parseFloat(inputs.max.value) || 0;
             minVal += holeSizeStep;
-            maxVal += holeSizeStep;
+            maxVal = Math.max(minVal, maxVal + holeSizeStep);
             inputs.min.value = minVal;
             inputs.max.value = maxVal;
             ensureValidGap();
             saveSettings();
-            updateFooterSpecsFromInputs();
-            if (sourceImage) setTimeout(generatePerforation, 10);
+            if (sourceImage) {
+                generatePerforation();
+            } else {
+                updateFooterSpecsFromInputs();
+            }
         });
     }
 
@@ -4774,16 +4805,7 @@ OpenArea: ${document.getElementById('statArea').innerText}
 </div> <!-- End main-wrapper -->
 
 <footer class="bg-white border-t border-gray-200 py-2 text-center text-sm text-gray-600">
-    <div class="footer-progress-wrap" id="footerProgressWrap" style="display: none;">
-        <div class="footer-progress-label">
-            <span id="footerProgressStatus">Processing…</span>
-            <span id="footerProgressTime"></span>
-        </div>
-        <div class="footer-progress-bar" id="footerProgressBar">
-            <div class="footer-progress-fill" id="footerProgressFill"></div>
-        </div>
-    </div>
-    <div style="display: flex; justify-content: space-around; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 20px; gap: 40px;">
+    <div style="display: flex; justify-content: space-around; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 20px; gap: 40px; flex-wrap: wrap;">
         <div style="padding: 0 10px;">
             <strong>Panels:</strong> <span id="footerPanels">0</span>
         </div>
@@ -4802,8 +4824,19 @@ OpenArea: ${document.getElementById('statArea').innerText}
         <div style="padding: 0 10px;">
             <strong>Spacing:</strong> <span id="footerSpacing">0</span>mm
         </div>
-        <div style="margin-left: auto; padding: 0 10px;">
-            Designed by Ehsan Mokhtary
+        <div style="display: flex; align-items: center; gap: 12px; margin-left: auto; padding: 0 10px;">
+            <div class="footer-progress-inline" id="footerProgressWrap" style="display: none;">
+                <div class="footer-progress-label" style="margin-bottom: 2px;">
+                    <span id="footerProgressStatus">Processing…</span>
+                    <span id="footerProgressTime"></span>
+                </div>
+                <div class="footer-progress-bar footer-progress-bar-inline" id="footerProgressBar">
+                    <div class="footer-progress-fill" id="footerProgressFill"></div>
+                </div>
+            </div>
+            <div style="padding: 0 10px;">
+                Designed by Ehsan Mokhtary
+            </div>
         </div>
     </div>
 </footer>
