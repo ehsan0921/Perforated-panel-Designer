@@ -1325,10 +1325,14 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
     <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
-            <!-- Logo/Title -->
-            <div class="flex items-center">
+            <!-- Logo/Title + Project Name & Reset -->
+            <div class="flex items-center gap-4 flex-wrap">
                 <h1 class="text-xl font-bold text-blue-600">Perforated panel Designer</h1>
-    </div>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="projectName" placeholder="Enter project name" class="nav-project-input" style="min-width:140px; max-width:200px; height:40px; padding:0 10px; border:1px solid #e2e8f0; border-radius:6px; font-size:0.875rem;">
+                    <button type="button" id="resetSettingsBtn" class="nav-btn nav-btn-secondary" title="Clear stored settings">Reset Settings</button>
+                </div>
+            </div>
 
             <!-- Right Side: Actions & Auth -->
             <div class="flex items-center gap-3 ml-auto">
@@ -1620,14 +1624,6 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     </div>
 
     <div class="control-group sub-control-panel">
-        <label style="margin-bottom:8px">Project Name</label>
-        <input type="text" id="projectName" placeholder="Enter project name" style="width:100%; padding:6px; margin-bottom:8px; border:1px solid #e2e8f0; border-radius:4px;">
-        <button type="button" id="resetSettingsBtn" style="margin-top:8px; width:100%; padding:6px; border-radius:4px; border:1px solid #e2e8f0; background:#f9fafb; cursor:pointer;">
-            Reset Settings
-        </button>
-    </div>
-    
-    <div class="control-group sub-control-panel">
         <label style="margin-bottom:8px">Image Fit &amp; Placement</label>
         <select id="imgFitMode" style="margin-bottom:8px">
             <option value="stretch">Stretch to Fit (Default)</option>
@@ -1874,6 +1870,13 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     </div>
     <div class="control-group">
         <div class="toggle-group">
+            <label style="margin:0; flex:1;">Show Annotations</label>
+            <div class="toggle-switch" id="showAnnotationsToggle"></div>
+        </div>
+        <small>Show each circle diameter, edge-to-edge gap to nearest circle, and distance from circle to panel edge (mm)</small>
+    </div>
+    <div class="control-group">
+        <div class="toggle-group">
             <label style="margin:0; flex:1;">Include Footer Statistics in Downloads</label>
             <div class="toggle-switch" id="includeFooterStatsToggle"></div>
         </div>
@@ -1973,6 +1976,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     // Alignment and Display Controls
     const alignmentButtons = document.querySelectorAll('.align-btn');
     const showPercentageToggle = document.getElementById('showPercentageToggle');
+    const showAnnotationsToggle = document.getElementById('showAnnotationsToggle');
     const includeFooterStatsToggle = document.getElementById('includeFooterStatsToggle');
     const swapColorsToggle = document.getElementById('swapColorsToggle');
     const percentageSizeSlider = document.getElementById('percentageSizeSlider');
@@ -2014,6 +2018,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     let panelAlignment = 'center'; // 'center', 'top-left', 'top', 'top-right', 'left', 'right', 'bottom-left', 'bottom', 'bottom-right'
     let showPercentage = false;
     let percentageSize = 100; // Percentage size multiplier (50-200%)
+    let showAnnotations = false; // Show diameter, gap to neighbor, distance to panel edge
     let panelStats = []; // Store stats per panel: [{sheetIndex, holeCount, openArea, bounds}]
     let includeFooterStatsInDownload = false; // Include footer statistics in downloaded files 
     let swapHolePanelColors = false; // Swap hole and panel colors for display/export
@@ -2045,6 +2050,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             panelAlignment: panelAlignment,
             showPercentage: showPercentage,
             percentageSize: percentageSize,
+            showAnnotations: showAnnotations,
             includeFooterStatsInDownload: includeFooterStatsInDownload,
             swapHolePanelColors: swapHolePanelColors,
             holeColor: holeColorInput && holeColorInput.value ? holeColorInput.value : '#000000',
@@ -2110,6 +2116,13 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                     }
                     if (percentageSizeValue) {
                         percentageSizeValue.textContent = percentageSize + '%';
+                    }
+                }
+                
+                if(s.showAnnotations !== undefined) {
+                    showAnnotations = s.showAnnotations;
+                    if (showAnnotationsToggle) {
+                        showAnnotationsToggle.classList.toggle('active', showAnnotations);
                     }
                 }
                 
@@ -2202,6 +2215,11 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         }
         if (percentageSizeValue) {
             percentageSizeValue.textContent = '100%';
+        }
+
+        showAnnotations = false;
+        if (showAnnotationsToggle) {
+            showAnnotationsToggle.classList.remove('active');
         }
 
         // Reset footer stats inclusion
@@ -2330,6 +2348,12 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                                 percentageSizeValue.textContent = percentageSize + '%';
                             }
                         }
+                        if(s.showAnnotations !== undefined) {
+                            showAnnotations = s.showAnnotations;
+                            if (showAnnotationsToggle) {
+                                showAnnotationsToggle.classList.toggle('active', showAnnotations);
+                            }
+                        }
                         
                         toggleImgControls();
                         saveSettings();
@@ -2422,6 +2446,15 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             if (percentageSizeContainer) {
                 percentageSizeContainer.style.display = showPercentage ? 'block' : 'none';
             }
+            saveSettings();
+            if (sourceImage) generatePerforation();
+        });
+    }
+    
+    if (showAnnotationsToggle) {
+        showAnnotationsToggle.addEventListener('click', () => {
+            showAnnotations = !showAnnotations;
+            showAnnotationsToggle.classList.toggle('active', showAnnotations);
             saveSettings();
             if (sourceImage) generatePerforation();
         });
@@ -3130,6 +3163,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         
         // Draw opening percentage overlay for each panel (if enabled for display)
         drawPercentageOverlay(ctx, pixelScale, showPercentage);
+        // Draw annotations (diameter, gap to neighbor, distance to panel edge) if enabled
+        drawAnnotations(ctx, pixelScale, showAnnotations, mL, mR, mT, mB);
 
         document.getElementById('statCount').innerText = count.toLocaleString();
         document.getElementById('statArea').innerText = ((totalHoleArea / (w*h)) * 100).toFixed(2) + "%";
@@ -3330,6 +3365,59 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 ctx.fillStyle = "white";
                 ctx.fillText(text, centerX, centerY);
             }
+        });
+        ctx.restore();
+    }
+
+    function drawAnnotations(ctx, pixelScale, shouldDraw, mL, mR, mT, mB) {
+        if (!shouldDraw || !generatedHoles.length) return;
+        const pitch = parseFloat(inputs.pitch.value) || 0;
+        const maxDist = pitch * 2.5; // only consider neighbors within this for gap (mm)
+        const maxDistSq = maxDist * maxDist;
+        ctx.save();
+        const fontSize = Math.max(7, Math.min(12, pixelScale * 0.5));
+        ctx.font = `${fontSize}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.fillStyle = "rgba(0,0,0,0.85)";
+        ctx.strokeStyle = "rgba(255,255,255,0.9)";
+        ctx.lineWidth = 1.5;
+        generatedHoles.forEach((h, i) => {
+            const cx = h.x * pixelScale;
+            const cy = h.y * pixelScale;
+            const diameterMm = (2 * h.r);
+            let gapMm = Infinity;
+            for (let j = 0; j < generatedHoles.length; j++) {
+                if (j === i) continue;
+                const o = generatedHoles[j];
+                const dx = o.x - h.x, dy = o.y - h.y;
+                const distSq = dx * dx + dy * dy;
+                if (distSq > maxDistSq) continue;
+                const d = Math.sqrt(distSq);
+                const edgeToEdge = d - h.r - o.r;
+                if (edgeToEdge < gapMm) gapMm = edgeToEdge;
+            }
+            if (gapMm === Infinity) gapMm = NaN;
+            let edgeMm = NaN;
+            for (let s = 0; s < sheetDefinitions.length; s++) {
+                const sheet = sheetDefinitions[s];
+                const left = sheet.x + mL, right = sheet.x + sheet.w - mR;
+                const top = sheet.y + mT, bottom = sheet.y + sheet.h - mB;
+                if (h.x >= left && h.x <= right && h.y >= top && h.y <= bottom) {
+                    const toLeft = (h.x - h.r) - left;
+                    const toRight = right - (h.x + h.r);
+                    const toTop = (h.y - h.r) - top;
+                    const toBottom = bottom - (h.y + h.r);
+                    edgeMm = Math.min(toLeft, toRight, toTop, toBottom);
+                    break;
+                }
+            }
+            const gapStr = isNaN(gapMm) ? "-" : gapMm.toFixed(2);
+            const edgeStr = isNaN(edgeMm) ? "-" : edgeMm.toFixed(2);
+            const text = "Ø" + diameterMm.toFixed(2) + "  gap " + gapStr + "  edge " + edgeStr;
+            const ty = cy + h.r * pixelScale + 2;
+            ctx.strokeText(text, cx, ty);
+            ctx.fillText(text, cx, ty);
         });
         ctx.restore();
     }
