@@ -2621,11 +2621,6 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         saveSettings();
     });
     inputs.max.addEventListener('input', () => {
-        const minVal = parseFloat(inputs.min.value);
-        const maxVal = parseFloat(inputs.max.value);
-        if (!isNaN(minVal) && !isNaN(maxVal) && maxVal < minVal) {
-            inputs.min.value = maxVal;
-        }
         if (lockPitchRadio.checked) {
             const p = parseFloat(inputs.pitch.value) || 0;
             const m = parseFloat(inputs.max.value) || 0;
@@ -2645,16 +2640,34 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         saveSettings();
     });
 
-    // Keep Max Hole >= Min Hole (when user types in either field)
-    // Min changed: if Min > Max, raise Max to match Min (keep user's Min).
-    inputs.min.addEventListener('input', () => {
+    // Keep Max Hole >= Min Hole on blur or Enter (so typing e.g. 32→30 doesn't change min mid-edit)
+    function applyMinMaxOrder() {
         const minVal = parseFloat(inputs.min.value);
         const maxVal = parseFloat(inputs.max.value);
-        if (!isNaN(minVal) && !isNaN(maxVal) && minVal > maxVal) {
+        if (isNaN(minVal) || isNaN(maxVal)) return;
+        
+        let changed = false;
+        if (minVal > maxVal) {
             inputs.max.value = minVal;
+            inputs.max.dispatchEvent(new Event('input', {bubbles: true}));
+            changed = true;
         }
-    });
-    // Max changed: if Max < Min, lower Min to match Max (keep user's Max).
+        if (maxVal < minVal) {
+            inputs.min.value = maxVal;
+            inputs.min.dispatchEvent(new Event('input', {bubbles: true}));
+            changed = true;
+        }
+        
+        if (changed) {
+            // Trigger change to save settings and regenerate
+            inputs.min.dispatchEvent(new Event('change', {bubbles: true}));
+            inputs.max.dispatchEvent(new Event('change', {bubbles: true}));
+        }
+    }
+    inputs.min.addEventListener('blur', applyMinMaxOrder);
+    inputs.max.addEventListener('blur', applyMinMaxOrder);
+    inputs.min.addEventListener('keydown', (e) => { if (e.key === 'Enter') { applyMinMaxOrder(); inputs.min.blur(); } });
+    inputs.max.addEventListener('keydown', (e) => { if (e.key === 'Enter') { applyMinMaxOrder(); inputs.max.blur(); } });
 
     // Min/Max hole size step buttons (+ / −)
     const holeSizeDecBtn = document.getElementById('holeSizeDecBtn');
@@ -2669,12 +2682,14 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             inputs.min.value = minVal;
             inputs.max.value = maxVal;
             ensureValidGap();
+            // Force trigger input and change events so all handlers (including pitch sync) see the new values
+            inputs.min.dispatchEvent(new Event('input', {bubbles: true}));
+            inputs.max.dispatchEvent(new Event('input', {bubbles: true}));
+            inputs.min.dispatchEvent(new Event('change', {bubbles: true}));
+            inputs.max.dispatchEvent(new Event('change', {bubbles: true}));
             saveSettings();
-            if (sourceImage) {
-                generatePerforation();
-            } else {
-                updateFooterSpecsFromInputs();
-            }
+            // Explicitly trigger regeneration to update footer
+            if (sourceImage) setTimeout(() => generatePerforation(), 20);
         });
     }
     if (holeSizeIncBtn) {
@@ -2686,12 +2701,14 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             inputs.min.value = minVal;
             inputs.max.value = maxVal;
             ensureValidGap();
+            // Force trigger input and change events so all handlers (including pitch sync) see the new values
+            inputs.min.dispatchEvent(new Event('input', {bubbles: true}));
+            inputs.max.dispatchEvent(new Event('input', {bubbles: true}));
+            inputs.min.dispatchEvent(new Event('change', {bubbles: true}));
+            inputs.max.dispatchEvent(new Event('change', {bubbles: true}));
             saveSettings();
-            if (sourceImage) {
-                generatePerforation();
-            } else {
-                updateFooterSpecsFromInputs();
-            }
+            // Explicitly trigger regeneration to update footer
+            if (sourceImage) setTimeout(() => generatePerforation(), 20);
         });
     }
 
@@ -2981,6 +2998,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         modal.classList.add('active');
         function close() {
             modal.classList.remove('active');
+            document.removeEventListener('keydown', onKeydown);
             var p = document.getElementById('confirmModalOk');
             var c = document.getElementById('confirmModalCancel');
             if (p) p.replaceWith(p.cloneNode(true));
@@ -2993,6 +3011,11 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         function onCancel() {
             close();
         }
+        function onKeydown(e) {
+            if (e.key === 'Enter') { e.preventDefault(); onProceed(); }
+            if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
+        }
+        document.addEventListener('keydown', onKeydown);
         var p = document.getElementById('confirmModalOk');
         var c = document.getElementById('confirmModalCancel');
         if (p) p.addEventListener('click', onProceed);
@@ -3098,13 +3121,14 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         // Safety Check
         const estTotal = (finalW / pitch) * (finalH / pitch);
         if (estTotal > 300000) {
-            showConfirmModal('Warning: ~' + Math.floor(estTotal).toLocaleString() + ' holes. Proceed?', function() {
+            showConfirmModal('Warning: ~' + Math.floor(estTotal).toLocaleString() + ' holes. Proceed?\n\nPress Enter to continue, Esc to cancel.', function() {
                 warningMsg.style.display = estTotal > 50000 ? 'block' : 'none';
                 generateBtn.innerText = "Processing...";
                 startFooterProgress();
                 setTimeout(function() {
                     const t0 = performance.now();
                     render(finalW, finalH, pitch, minDia, maxDia, invert);
+                    updateFooterFromLastRender();
                     endFooterProgress(performance.now() - t0);
                     generateBtn.innerText = "Update Pattern";
                 }, 50);
@@ -3118,6 +3142,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         setTimeout(() => {
             const t0 = performance.now();
             render(finalW, finalH, pitch, minDia, maxDia, invert);
+            updateFooterFromLastRender();
             endFooterProgress(performance.now() - t0);
             generateBtn.innerText = "Update Pattern";
         }, 50);
@@ -3301,7 +3326,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         document.getElementById('statCount').innerText = count.toLocaleString();
         document.getElementById('statArea').innerText = ((totalHoleArea / (w*h)) * 100).toFixed(2) + "%";
         
-        // Update footer statistics
+        // Update footer statistics - force direct updates to ensure they happen
         const footerPanels = document.getElementById('footerPanels');
         const footerHoles = document.getElementById('footerHoles');
         const footerOpening = document.getElementById('footerOpening');
@@ -3310,7 +3335,10 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const footerSpacing = document.getElementById('footerSpacing');
         
         if (footerPanels) footerPanels.textContent = sheetDefinitions.length.toString();
-        if (footerHoles) footerHoles.textContent = count.toLocaleString();
+        if (footerHoles) {
+            footerHoles.textContent = count.toLocaleString();
+            footerHoles.setAttribute('data-count', count); // Force DOM update
+        }
         if (footerOpening) footerOpening.textContent = ((totalHoleArea / (w*h)) * 100).toFixed(2) + "%";
         if (footerMinHole) footerMinHole.textContent = inputs.min.value || "0";
         if (footerMaxHole) footerMaxHole.textContent = inputs.max.value || "0";
@@ -3326,6 +3354,35 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     }
 
     // --- EXPORT FUNCTIONS ---
+
+    // Update full footer from last render state (call after render so +/- and Update Pattern always refresh holes)
+    function updateFooterFromLastRender() {
+        const footerPanels = document.getElementById('footerPanels');
+        const footerHoles = document.getElementById('footerHoles');
+        const footerOpening = document.getElementById('footerOpening');
+        const footerMinHole = document.getElementById('footerMinHole');
+        const footerMaxHole = document.getElementById('footerMaxHole');
+        const footerSpacing = document.getElementById('footerSpacing');
+        if (footerPanels) footerPanels.textContent = sheetDefinitions.length.toString();
+        if (footerHoles) {
+            const holeCount = generatedHoles.length;
+            footerHoles.textContent = holeCount.toLocaleString();
+            footerHoles.setAttribute('data-count', holeCount);
+            // Force repaint
+            footerHoles.style.opacity = '0.99';
+            setTimeout(() => { if (footerHoles) footerHoles.style.opacity = '1'; }, 0);
+        }
+        const w = parseFloat(inputs.w.value) || 0;
+        const h = parseFloat(inputs.h.value) || 0;
+        if (w > 0 && h > 0 && footerOpening) {
+            let totalHoleArea = 0;
+            generatedHoles.forEach(ho => { totalHoleArea += Math.PI * Math.pow(ho.r, 2); });
+            footerOpening.textContent = ((totalHoleArea / (w * h)) * 100).toFixed(2) + "%";
+        }
+        if (footerMinHole) footerMinHole.textContent = inputs.min.value || "0";
+        if (footerMaxHole) footerMaxHole.textContent = inputs.max.value || "0";
+        if (footerSpacing) footerSpacing.textContent = inputs.pitch.value || "0";
+    }
 
     // Update footer Min/Max/Spacing from current inputs (e.g. when +/- used without regenerating)
     function updateFooterSpecsFromInputs() {
