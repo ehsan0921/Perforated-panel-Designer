@@ -1215,9 +1215,48 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             width: 100% !important;
             background: linear-gradient(90deg, #10b981, #34d399);
         }
+        .footer-one-line {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: center;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0 20px;
+            gap: 20px;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+        .footer-stats-left {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: center;
+            gap: 20px;
+        }
+        .footer-stats-left > span {
+            white-space: nowrap;
+        }
+        .footer-one-line > span {
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
         .footer-progress-inline {
-            min-width: 100px;
-            max-width: 180px;
+            display: inline-flex !important;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            margin-right: auto;
+        }
+        .footer-progress-inline #footerProgressBar {
+            background: #e2e8f0;
+            border-radius: 2px;
+            overflow: hidden;
+            width: 110px;
+            height: 5px;
+        }
+        .footer-progress-inline .footer-progress-fill {
+            display: block !important;
+            height: 5px;
+            border-radius: 2px;
         }
         .footer-progress-bar-inline {
             height: 4px;
@@ -2582,7 +2621,11 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         saveSettings();
     });
     inputs.max.addEventListener('input', () => {
-        ensureMaxGreaterThanOrEqualMin();
+        const minVal = parseFloat(inputs.min.value);
+        const maxVal = parseFloat(inputs.max.value);
+        if (!isNaN(minVal) && !isNaN(maxVal) && maxVal < minVal) {
+            inputs.min.value = maxVal;
+        }
         if (lockPitchRadio.checked) {
             const p = parseFloat(inputs.pitch.value) || 0;
             const m = parseFloat(inputs.max.value) || 0;
@@ -2603,21 +2646,15 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     });
 
     // Keep Max Hole >= Min Hole (when user types in either field)
-    function ensureMaxGreaterThanOrEqualMin() {
-        let minVal = parseFloat(inputs.min.value);
-        let maxVal = parseFloat(inputs.max.value);
-        if (isNaN(minVal)) return;
-        if (isNaN(maxVal)) return;
-        if (minVal > maxVal) {
+    // Min changed: if Min > Max, raise Max to match Min (keep user's Min).
+    inputs.min.addEventListener('input', () => {
+        const minVal = parseFloat(inputs.min.value);
+        const maxVal = parseFloat(inputs.max.value);
+        if (!isNaN(minVal) && !isNaN(maxVal) && minVal > maxVal) {
             inputs.max.value = minVal;
         }
-        if (maxVal < minVal) {
-            inputs.min.value = maxVal;
-        }
-    }
-    inputs.min.addEventListener('input', () => {
-        ensureMaxGreaterThanOrEqualMin();
     });
+    // Max changed: if Max < Min, lower Min to match Max (keep user's Max).
 
     // Min/Max hole size step buttons (+ / −)
     const holeSizeDecBtn = document.getElementById('holeSizeDecBtn');
@@ -2994,8 +3031,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const status = document.getElementById('footerProgressStatus');
         const timeEl = document.getElementById('footerProgressTime');
         if (wrap && bar && fill && status) {
-            wrap.style.display = 'block';
-            status.textContent = 'Processing…';
+            wrap.style.display = 'inline-flex';
+            status.textContent = 'Generating…';
             if (timeEl) timeEl.textContent = '';
             bar.classList.remove('done');
             bar.classList.add('indeterminate');
@@ -3020,7 +3057,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         setTimeout(function() {
             bar.classList.remove('done');
             fill.style.width = '0%';
-            if (status) status.textContent = 'Last run';
+            if (status) status.textContent = 'Ready';
         }, 2200);
     }
     function generatePerforation() {
@@ -4805,39 +4842,22 @@ OpenArea: ${document.getElementById('statArea').innerText}
 </div> <!-- End main-wrapper -->
 
 <footer class="bg-white border-t border-gray-200 py-2 text-center text-sm text-gray-600">
-    <div style="display: flex; justify-content: space-around; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 20px; gap: 40px; flex-wrap: wrap;">
-        <div style="padding: 0 10px;">
-            <strong>Panels:</strong> <span id="footerPanels">0</span>
+    <div class="footer-one-line">
+        <div class="footer-stats-left">
+            <span><strong>Panels:</strong> <span id="footerPanels">0</span></span>
+            <span><strong>Holes:</strong> <span id="footerHoles">0</span></span>
+            <span><strong>Opening:</strong> <span id="footerOpening">0%</span></span>
+            <span><strong>Min Hole:</strong> <span id="footerMinHole">0</span>mm</span>
+            <span><strong>Max Hole:</strong> <span id="footerMaxHole">0</span>mm</span>
+            <span><strong>Spacing:</strong> <span id="footerSpacing">0</span>mm</span>
         </div>
-        <div style="padding: 0 10px;">
-            <strong>Holes:</strong> <span id="footerHoles">0</span>
-        </div>
-        <div style="padding: 0 10px;">
-            <strong>Opening:</strong> <span id="footerOpening">0%</span>
-        </div>
-        <div style="padding: 0 10px;">
-            <strong>Min Hole:</strong> <span id="footerMinHole">0</span>mm
-        </div>
-        <div style="padding: 0 10px;">
-            <strong>Max Hole:</strong> <span id="footerMaxHole">0</span>mm
-        </div>
-        <div style="padding: 0 10px;">
-            <strong>Spacing:</strong> <span id="footerSpacing">0</span>mm
-        </div>
-        <div style="display: flex; align-items: center; gap: 12px; margin-left: auto; padding: 0 10px;">
-            <div class="footer-progress-inline" id="footerProgressWrap" style="display: none;">
-                <div class="footer-progress-label" style="margin-bottom: 2px;">
-                    <span id="footerProgressStatus">Processing…</span>
-                    <span id="footerProgressTime"></span>
-                </div>
-                <div class="footer-progress-bar footer-progress-bar-inline" id="footerProgressBar">
-                    <div class="footer-progress-fill" id="footerProgressFill"></div>
-                </div>
-            </div>
-            <div style="padding: 0 10px;">
-                Designed by Ehsan Mokhtary
-            </div>
-        </div>
+        <span class="footer-progress-inline" id="footerProgressWrap" style="display: none;">
+            <span id="footerProgressStatus">Ready</span> <span id="footerProgressTime"></span>
+            <span class="footer-progress-bar footer-progress-bar-inline" id="footerProgressBar" style="display: inline-block; vertical-align: middle; margin-left: 4px;">
+                <span class="footer-progress-fill" id="footerProgressFill" style="display: inline-block; border-radius: 2px; vertical-align: middle;"></span>
+            </span>
+        </span>
+        <span style="margin-left: auto;">Designed by Ehsan Mokhtary</span>
     </div>
 </footer>
 
