@@ -596,7 +596,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             margin-top: 0;
         }
 
-        /* Sidebar Layout */
+        /* Sidebar Layout - z-index above footer so sidebar sits on top of footer */
         aside {
             width: 360px;
             background: var(--panel-bg);
@@ -607,7 +607,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             overflow-y: auto;
             flex-shrink: 0;
             box-shadow: 4px 0 24px rgba(0,0,0,0.05);
-            z-index: 10;
+            z-index: 110;
         }
 
         h1 {
@@ -1166,20 +1166,23 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             font-weight: 600;
         }
         
-        /* Footer Styles */
+        /* Footer Styles - full width; sidebar (z-index 110) sits on top of footer */
         footer {
             position: fixed;
             bottom: 0;
-            left: 360px; /* Account for sidebar width */
+            left: 0;
             right: 0;
             background: var(--panel-bg);
             border-top: 1px solid var(--border);
-            padding: 10px 20px;
-            z-index: 5;
+            padding: 12px 20px;
+            z-index: 100;
             text-align: center;
             font-size: 0.85rem;
             color: #64748b;
-            z-index: 100;
+            line-height: 1.5;
+            min-height: 3em;
+            overflow: visible;
+            box-sizing: border-box;
         }
         /* Footer progress bar */
         .footer-progress-wrap {
@@ -1230,12 +1233,16 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             gap: 20px;
             font-size: 0.85rem;
             color: #64748b;
+            overflow-x: auto;
+            line-height: 1.5;
+            min-height: 1.5em;
         }
         .footer-stats-left {
             display: flex;
             flex-wrap: nowrap;
             align-items: center;
             gap: 20px;
+            min-width: 0;
         }
         .footer-stats-left > span {
             white-space: nowrap;
@@ -1243,6 +1250,18 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         .footer-one-line > span {
             white-space: nowrap;
             flex-shrink: 0;
+        }
+        .footer-credit {
+            flex-shrink: 0;
+            margin-left: auto;
+            visibility: visible !important;
+            min-width: max-content;
+            position: sticky;
+            right: 0;
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 4px;
+            border-left: 1px solid #e2e8f0;
         }
         .footer-progress-inline {
             display: inline-flex !important;
@@ -2335,7 +2354,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             if (content) {
                 content.style.fontSize = ''; 
                 content.style.gap = ''; 
-                const stats = footerReset.querySelector('.footer-stats-left');
+                const stats = content.querySelector('.footer-stats-left');
                 if (stats) stats.style.gap = '';
                 const progBar = document.getElementById('footerProgressBar');
                 if (progBar) {
@@ -4971,32 +4990,33 @@ OpenArea: ${document.getElementById('statArea').innerText}
     window.showNotification = showNotification;
     window.handleDownloadClick = handleDownloadClick;
 
-    // --- Resizable Footer Logic ---
-    const footerEl = document.querySelector('footer');
-    if (footerEl) {
+    // --- Resizable Footer Logic (run after DOM so footer and buttons exist) ---
+    function initResizableFooter() {
+        const footerEl = document.querySelector('footer');
+        if (!footerEl) return;
+
         // Prepare footer styles for resizing
         footerEl.style.position = 'relative';
-        footerEl.style.minHeight = '30px';
+        footerEl.style.minHeight = '44px';
         footerEl.style.overflow = 'visible';
         
         // Create resize handle
         const handle = document.createElement('div');
         Object.assign(handle.style, {
             position: 'absolute',
-            top: '-5px', // Straddle top edge
+            top: '-5px',
             left: '0',
             right: '0',
-            height: '10px', // Larger hit area
+            height: '10px',
             cursor: 'ns-resize',
             zIndex: '1000',
             backgroundColor: 'transparent' 
         });
         handle.title = 'Drag to resize footer';
         
-        // Add visual indicator on hover
         handle.addEventListener('mouseenter', () => {
             handle.style.backgroundColor = 'rgba(0,0,0,0.05)';
-            handle.style.borderTop = '2px solid #cbd5e1'; // Clear visual cue
+            handle.style.borderTop = '2px solid #cbd5e1';
         });
         handle.addEventListener('mouseleave', () => {
             handle.style.backgroundColor = 'transparent';
@@ -5010,32 +5030,22 @@ OpenArea: ${document.getElementById('statArea').innerText}
         let startHeight = 0;
 
         function updateFooterHeight(h) {
-            const newHeight = Math.max(30, Math.min(400, h));
+            const newHeight = Math.max(44, Math.min(400, h));
             footerEl.style.height = newHeight + 'px';
             
-            // Dynamic scaling logic
             const fontSize = Math.max(12, newHeight * 0.34);
-            
             const content = footerEl.querySelector('.footer-one-line');
             if (content) {
                 content.style.fontSize = fontSize + 'px';
                 content.style.gap = (fontSize * 1.5) + 'px';
-                const stats = footerEl.querySelector('.footer-stats-left');
+                const stats = content.querySelector('.footer-stats-left');
                 if (stats) stats.style.gap = (fontSize * 1.5) + 'px';
                 const progBar = document.getElementById('footerProgressBar');
                 if (progBar) {
                     progBar.style.width = (110 * (fontSize / 13.6)) + 'px';
                     progBar.style.height = (5 * (fontSize / 13.6)) + 'px';
                 }
-                
-                // Scale zoom buttons
-                const zoomBtns = footerEl.querySelectorAll('#footerSizeDec, #footerSizeInc');
-                zoomBtns.forEach(btn => {
-                    btn.style.fontSize = (fontSize * 0.8) + 'px';
-                    btn.style.padding = `0 ${fontSize * 0.4}px`;
-                });
             }
-            
             try { localStorage.setItem('footerHeight', newHeight + 'px'); } catch(e) {}
         }
 
@@ -5044,7 +5054,6 @@ OpenArea: ${document.getElementById('statArea').innerText}
             startY = e.clientY;
             startHeight = footerEl.offsetHeight;
             document.body.style.cursor = 'ns-resize';
-            // Prevent text selection during drag
             e.preventDefault();
         });
 
@@ -5061,17 +5070,15 @@ OpenArea: ${document.getElementById('statArea').innerText}
             }
         });
         
-        // Buttons
-        const btnDec = document.getElementById('footerSizeDec');
-        const btnInc = document.getElementById('footerSizeInc');
-        if (btnDec) btnDec.addEventListener('click', () => updateFooterHeight(footerEl.offsetHeight - 5));
-        if (btnInc) btnInc.addEventListener('click', () => updateFooterHeight(footerEl.offsetHeight + 5));
-
-        // Load saved footer height
         try {
             const savedHeight = localStorage.getItem('footerHeight');
             if (savedHeight) updateFooterHeight(parseFloat(savedHeight));
         } catch(e) {}
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initResizableFooter);
+    } else {
+        initResizableFooter();
     }
 </script>
 
@@ -5080,10 +5087,6 @@ OpenArea: ${document.getElementById('statArea').innerText}
 <footer class="bg-white border-t border-gray-200 py-2 text-center text-sm text-gray-600">
     <div class="footer-one-line">
         <div class="footer-stats-left">
-            <div style="display: flex; gap: 4px; margin-right: 5px;">
-                <button id="footerSizeDec" title="Decrease Footer Size" style="border: 1px solid #cbd5e1; background: white; cursor: pointer; padding: 0 6px; border-radius: 3px; font-size: 0.9em; line-height: 1;">-</button>
-                <button id="footerSizeInc" title="Increase Footer Size" style="border: 1px solid #cbd5e1; background: white; cursor: pointer; padding: 0 6px; border-radius: 3px; font-size: 0.9em; line-height: 1;">+</button>
-            </div>
             <span><strong>Panels:</strong> <span id="footerPanels">0</span></span>
             <span><strong>Holes:</strong> <span id="footerHoles">0</span></span>
             <span><strong>Opening:</strong> <span id="footerOpening">0%</span></span>
@@ -5097,7 +5100,7 @@ OpenArea: ${document.getElementById('statArea').innerText}
                 <span class="footer-progress-fill" id="footerProgressFill" style="display: inline-block; border-radius: 2px; vertical-align: middle;"></span>
             </span>
         </span>
-        <span style="margin-left: auto;">Designed by Ehsan Mokhtary</span>
+        <span class="footer-credit">Designed by Ehsan Mokhtary</span>
     </div>
 </footer>
 
