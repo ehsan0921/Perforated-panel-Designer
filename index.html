@@ -4956,24 +4956,31 @@ OpenArea: ${document.getElementById('statArea').innerText}
         // Prepare footer styles for resizing
         footerEl.style.position = 'relative';
         footerEl.style.minHeight = '30px';
+        footerEl.style.overflow = 'visible';
         
         // Create resize handle
         const handle = document.createElement('div');
         Object.assign(handle.style, {
             position: 'absolute',
-            top: '0',
+            top: '-5px', // Straddle top edge
             left: '0',
             right: '0',
-            height: '6px',
+            height: '10px', // Larger hit area
             cursor: 'ns-resize',
-            zIndex: '100',
-            backgroundColor: 'transparent' // invisible but draggable
+            zIndex: '1000',
+            backgroundColor: 'transparent' 
         });
         handle.title = 'Drag to resize footer';
         
         // Add visual indicator on hover
-        handle.addEventListener('mouseenter', () => handle.style.backgroundColor = 'rgba(0,0,0,0.05)');
-        handle.addEventListener('mouseleave', () => handle.style.backgroundColor = 'transparent');
+        handle.addEventListener('mouseenter', () => {
+            handle.style.backgroundColor = 'rgba(0,0,0,0.05)';
+            handle.style.borderTop = '2px solid #cbd5e1'; // Clear visual cue
+        });
+        handle.addEventListener('mouseleave', () => {
+            handle.style.backgroundColor = 'transparent';
+            handle.style.borderTop = 'none';
+        });
         
         footerEl.prepend(handle);
 
