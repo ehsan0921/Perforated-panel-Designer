@@ -2324,6 +2324,27 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         if (errSplitW) errSplitW.textContent = '';
         if (errSplitH) errSplitH.textContent = '';
 
+        // Clear footer height preference
+        try {
+            localStorage.removeItem('footerHeight');
+        } catch(e) {}
+        const footerReset = document.querySelector('footer');
+        if (footerReset) {
+            footerReset.style.height = ''; 
+            const content = footerReset.querySelector('.footer-one-line');
+            if (content) {
+                content.style.fontSize = ''; 
+                content.style.gap = ''; 
+                const stats = footerReset.querySelector('.footer-stats-left');
+                if (stats) stats.style.gap = '';
+                const progBar = document.getElementById('footerProgressBar');
+                if (progBar) {
+                    progBar.style.width = '110px';
+                    progBar.style.height = '5px';
+                }
+            }
+        }
+
         // Re-apply image control visibility
         toggleImgControls();
 
@@ -5029,8 +5050,37 @@ OpenArea: ${document.getElementById('statArea').innerText}
             if (isResizing) {
                 isResizing = false;
                 document.body.style.cursor = '';
+                // Save height to local storage
+                try {
+                    localStorage.setItem('footerHeight', footerEl.style.height);
+                } catch(e) {}
             }
         });
+
+        // Load saved footer height
+        try {
+            const savedHeight = localStorage.getItem('footerHeight');
+            if (savedHeight) {
+                const newHeight = parseFloat(savedHeight);
+                if (newHeight >= 30 && newHeight <= 400) {
+                    footerEl.style.height = savedHeight;
+                    // Apply font scaling
+                    const fontSize = Math.max(12, newHeight * 0.34);
+                    const content = footerEl.querySelector('.footer-one-line');
+                    if (content) {
+                        content.style.fontSize = fontSize + 'px';
+                        content.style.gap = (fontSize * 1.5) + 'px';
+                        const stats = footerEl.querySelector('.footer-stats-left');
+                        if (stats) stats.style.gap = (fontSize * 1.5) + 'px';
+                        const progBar = document.getElementById('footerProgressBar');
+                        if (progBar) {
+                            progBar.style.width = (110 * (fontSize / 13.6)) + 'px';
+                            progBar.style.height = (5 * (fontSize / 13.6)) + 'px';
+                        }
+                    }
+                }
+            }
+        } catch(e) {}
     }
 </script>
 
