@@ -5009,6 +5009,36 @@ OpenArea: ${document.getElementById('statArea').innerText}
         let startY = 0;
         let startHeight = 0;
 
+        function updateFooterHeight(h) {
+            const newHeight = Math.max(30, Math.min(400, h));
+            footerEl.style.height = newHeight + 'px';
+            
+            // Dynamic scaling logic
+            const fontSize = Math.max(12, newHeight * 0.34);
+            
+            const content = footerEl.querySelector('.footer-one-line');
+            if (content) {
+                content.style.fontSize = fontSize + 'px';
+                content.style.gap = (fontSize * 1.5) + 'px';
+                const stats = footerEl.querySelector('.footer-stats-left');
+                if (stats) stats.style.gap = (fontSize * 1.5) + 'px';
+                const progBar = document.getElementById('footerProgressBar');
+                if (progBar) {
+                    progBar.style.width = (110 * (fontSize / 13.6)) + 'px';
+                    progBar.style.height = (5 * (fontSize / 13.6)) + 'px';
+                }
+                
+                // Scale zoom buttons
+                const zoomBtns = footerEl.querySelectorAll('#footerSizeDec, #footerSizeInc');
+                zoomBtns.forEach(btn => {
+                    btn.style.fontSize = (fontSize * 0.8) + 'px';
+                    btn.style.padding = `0 ${fontSize * 0.4}px`;
+                });
+            }
+            
+            try { localStorage.setItem('footerHeight', newHeight + 'px'); } catch(e) {}
+        }
+
         handle.addEventListener('mousedown', (e) => {
             isResizing = true;
             startY = e.clientY;
@@ -5021,65 +5051,26 @@ OpenArea: ${document.getElementById('statArea').innerText}
         document.addEventListener('mousemove', (e) => {
             if (!isResizing) return;
             const diff = startY - e.clientY;
-            const newHeight = Math.max(30, Math.min(400, startHeight + diff));
-            
-            footerEl.style.height = newHeight + 'px';
-            
-            // Dynamic scaling logic
-            // Base: 40px height -> ~13.6px font (0.85rem)
-            // Scale factor ~ 0.34
-            const fontSize = Math.max(12, newHeight * 0.34);
-            
-            const content = footerEl.querySelector('.footer-one-line');
-            if (content) {
-                content.style.fontSize = fontSize + 'px';
-                // Scale gaps proportionally
-                content.style.gap = (fontSize * 1.5) + 'px';
-                const stats = footerEl.querySelector('.footer-stats-left');
-                if (stats) stats.style.gap = (fontSize * 1.5) + 'px';
-                // Scale progress bar width and height
-                const progBar = document.getElementById('footerProgressBar');
-                if (progBar) {
-                    progBar.style.width = (110 * (fontSize / 13.6)) + 'px';
-                    progBar.style.height = (5 * (fontSize / 13.6)) + 'px';
-                }
-            }
+            updateFooterHeight(startHeight + diff);
         });
 
         document.addEventListener('mouseup', () => {
             if (isResizing) {
                 isResizing = false;
                 document.body.style.cursor = '';
-                // Save height to local storage
-                try {
-                    localStorage.setItem('footerHeight', footerEl.style.height);
-                } catch(e) {}
             }
         });
+        
+        // Buttons
+        const btnDec = document.getElementById('footerSizeDec');
+        const btnInc = document.getElementById('footerSizeInc');
+        if (btnDec) btnDec.addEventListener('click', () => updateFooterHeight(footerEl.offsetHeight - 5));
+        if (btnInc) btnInc.addEventListener('click', () => updateFooterHeight(footerEl.offsetHeight + 5));
 
         // Load saved footer height
         try {
             const savedHeight = localStorage.getItem('footerHeight');
-            if (savedHeight) {
-                const newHeight = parseFloat(savedHeight);
-                if (newHeight >= 30 && newHeight <= 400) {
-                    footerEl.style.height = savedHeight;
-                    // Apply font scaling
-                    const fontSize = Math.max(12, newHeight * 0.34);
-                    const content = footerEl.querySelector('.footer-one-line');
-                    if (content) {
-                        content.style.fontSize = fontSize + 'px';
-                        content.style.gap = (fontSize * 1.5) + 'px';
-                        const stats = footerEl.querySelector('.footer-stats-left');
-                        if (stats) stats.style.gap = (fontSize * 1.5) + 'px';
-                        const progBar = document.getElementById('footerProgressBar');
-                        if (progBar) {
-                            progBar.style.width = (110 * (fontSize / 13.6)) + 'px';
-                            progBar.style.height = (5 * (fontSize / 13.6)) + 'px';
-                        }
-                    }
-                }
-            }
+            if (savedHeight) updateFooterHeight(parseFloat(savedHeight));
         } catch(e) {}
     }
 </script>
@@ -5089,6 +5080,10 @@ OpenArea: ${document.getElementById('statArea').innerText}
 <footer class="bg-white border-t border-gray-200 py-2 text-center text-sm text-gray-600">
     <div class="footer-one-line">
         <div class="footer-stats-left">
+            <div style="display: flex; gap: 4px; margin-right: 5px;">
+                <button id="footerSizeDec" title="Decrease Footer Size" style="border: 1px solid #cbd5e1; background: white; cursor: pointer; padding: 0 6px; border-radius: 3px; font-size: 0.9em; line-height: 1;">-</button>
+                <button id="footerSizeInc" title="Increase Footer Size" style="border: 1px solid #cbd5e1; background: white; cursor: pointer; padding: 0 6px; border-radius: 3px; font-size: 0.9em; line-height: 1;">+</button>
+            </div>
             <span><strong>Panels:</strong> <span id="footerPanels">0</span></span>
             <span><strong>Holes:</strong> <span id="footerHoles">0</span></span>
             <span><strong>Opening:</strong> <span id="footerOpening">0%</span></span>
