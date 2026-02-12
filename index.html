@@ -1473,17 +1473,19 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                     
                     <!-- Downloads Dropdown Menu -->
                     <div id="downloadsMenuDropdown" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50">
-                        <button id="downloadImgBtn" onclick="window.downloadImage(); toggleDownloadsMenu();" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-3" disabled>
+                        <button id="downloadImgBtn" onclick="handleDownloadClick('png');" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-3" disabled>
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                             </svg>
-                            <span class="font-medium">Map (.png)</span>
+                            <span class="font-medium flex-1">Map (.png)</span>
+                            <svg id="pngLockIcon" class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:none;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                         </button>
-                        <button id="downloadTxtBtn" onclick="window.downloadSpecs(); toggleDownloadsMenu();" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-3" disabled>
+                        <button id="downloadTxtBtn" onclick="handleDownloadClick('txt');" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-3" disabled>
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
-                            <span class="font-medium">Settings (.txt)</span>
+                            <span class="font-medium flex-1">Settings (.txt)</span>
+                            <svg id="txtLockIcon" class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:none;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                         </button>
                         <button id="downloadDxfBtn" onclick="handleDownloadClick('dxf');" class="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-3" disabled>
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1514,6 +1516,13 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                         </button>
                     </div>
                 </div>
+                
+                <!-- Email (registered users only) -->
+                <button type="button" id="emailResultBtn" class="nav-btn nav-btn-secondary flex items-center gap-1.5" title="Email result to yourself" onclick="handleEmailResultClick()" disabled>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    <span>Email</span>
+                    <svg id="emailLockIcon" class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:none;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </button>
                 
                 <!-- Auth Section -->
                 <div class="flex items-center gap-3 border-l border-gray-300 pl-3 ml-3">
@@ -1703,6 +1712,42 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         <div style="display:flex; gap:10px; justify-content:flex-end;">
             <button type="button" id="confirmModalCancel" class="btn-secondary">Cancel</button>
             <button type="button" id="confirmModalOk" class="btn-primary">Proceed</button>
+        </div>
+    </div>
+</div>
+
+<!-- Email requires login modal -->
+<div id="emailLoginRequiredModal" class="modal">
+    <div class="modal-content" style="max-width:400px;">
+        <div class="modal-header">
+            <h2>Email Result</h2>
+        </div>
+        <p style="margin:0 0 20px 0; color:#475569;">You need to login or register to use this.</p>
+        <div style="display:flex; gap:10px; justify-content:flex-end;">
+            <button type="button" class="btn-secondary" onclick="document.getElementById('emailLoginRequiredModal').classList.remove('active');">Cancel</button>
+            <button type="button" class="btn-primary" onclick="document.getElementById('emailLoginRequiredModal').classList.remove('active'); showAuthModal();">Login / Register</button>
+        </div>
+    </div>
+</div>
+
+<!-- Email Options Modal -->
+<div id="emailOptionsModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h2>Send Result via Email</h2>
+            <span class="modal-close" onclick="document.getElementById('emailOptionsModal').classList.remove('active')">&times;</span>
+        </div>
+        <div style="margin-bottom:1rem;">
+            <label for="emailRecipient" style="display:block; margin-bottom:0.5rem; font-weight:500; color:#475569;">Recipient Emails (comma separated)</label>
+            <input type="text" id="emailRecipient" placeholder="friend@example.com, colleague@work.com" class="auth-input" style="width:100%;">
+        </div>
+        <div style="margin-bottom:1rem;">
+            <label for="emailMessage" style="display:block; margin-bottom:0.5rem; font-weight:500; color:#475569;">Message (Optional)</label>
+            <textarea id="emailMessage" rows="3" placeholder="Add a personal note..." class="auth-input" style="width:100%; min-height:80px; resize:vertical; font-family:inherit;"></textarea>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+            <button type="button" class="btn-secondary" onclick="document.getElementById('emailOptionsModal').classList.remove('active')">Cancel</button>
+            <button type="button" class="btn-primary" onclick="window.submitEmailForm()">Send Email</button>
         </div>
     </div>
 </div>
@@ -2030,8 +2075,10 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     // State
     const CONFIG = {
         baseScale: 2, // Desired Pixels per MM
-        maxCanvasDimension: 4096 // Hard limit
+        maxCanvasDimension: 4096, // Hard limit
+        MIN_GAP: 0.01 // Minimum gap between holes (mm)
     };
+    const MIN_GAP = CONFIG.MIN_GAP;
     
     let sourceImage = null;
     let imageAspectRatio = 0;
@@ -2132,6 +2179,11 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     let swapHolePanelColors = false; // Swap hole and panel colors for display/export
 
     const DEFAULT_PROJECT_NAME = 'Untitled'; // Avoid empty field so Chrome doesn't treat it as username
+
+    // --- Email (Mailgun) – non-secret config; credentials are in Cloudflare Variables/Secrets ---
+    const EMAIL_SMTP_HOST = 'smtp.mailgun.org';
+    const EMAIL_WEBSITE_URL = 'https://perforated-panel-designer.pages.dev';
+    const EMAIL_DESIGNED_BY = 'Designed by Ehsan Mokhtary';
 
     // --- LOCAL STORAGE ---
     function saveSettings() {
@@ -2634,7 +2686,6 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     });
 
     // Minimum gap between holes (mm) - gap must be > 0
-    const MIN_GAP = 0.01;
     function ensureValidGap() {
         const e = parseFloat(inputs.edge.value);
         if (isNaN(e) || e < MIN_GAP) {
@@ -3444,6 +3495,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         downloadDxfBtn.disabled = false;
         downloadSvgBtn.disabled = false;
         if (downloadZipBtn) downloadZipBtn.disabled = false;
+        const emailResultBtn = document.getElementById('emailResultBtn');
+        if (emailResultBtn) emailResultBtn.disabled = false;
         
         if (scale === 1 && panX === 0) zoomFit();
     }
@@ -3507,7 +3560,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         return { panels, holes, opening, minHole, maxHole, spacing };
     }
 
-    function downloadDXF() {
+    function downloadDXF(returnString = false) {
         if (generatedHoles.length === 0) return;
         const filename = getDownloadFilename();
         const totalH = parseFloat(inputs.h.value);
@@ -3592,6 +3645,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 
         dxf += "0\nENDSEC\n";
         dxf += "0\nEOF\n";
+
+        if (returnString) return dxf;
 
         const blob = new Blob([dxf], {type: "application/dxf"});
         const link = document.createElement('a');
@@ -3699,7 +3754,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         imgLink.click();
     }
 
-    function downloadSVG() {
+    function downloadSVG(returnString = false) {
         if (generatedHoles.length === 0) return;
         const filename = getDownloadFilename();
         const totalH = parseFloat(inputs.h.value);
@@ -3755,6 +3810,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         }
 
         svg += '</svg>';
+
+        if (returnString) return svg;
 
         const blob = new Blob([svg], { type: 'image/svg+xml' });
         const link = document.createElement('a');
@@ -4082,6 +4139,22 @@ OpenArea: ${document.getElementById('statArea').innerText}
             if (svgContent) {
                 zip.file(`${filename}.svg`, svgContent);
             }
+
+            // Add Original Image
+            if (sourceImage && sourceImage.src) {
+                try {
+                    const response = await fetch(sourceImage.src);
+                    const blob = await response.blob();
+                    let ext = 'png';
+                    if (blob.type === 'image/jpeg') ext = 'jpg';
+                    else if (blob.type === 'image/webp') ext = 'webp';
+                    else if (blob.type === 'image/gif') ext = 'gif';
+                    
+                    zip.file(`${filename}_original.${ext}`, blob);
+                } catch (e) {
+                    console.warn('Failed to add original image to ZIP', e);
+                }
+            }
             
             // Generate zip file
             const zipBlob = await zip.generateAsync({ type: 'blob' });
@@ -4218,6 +4291,12 @@ OpenArea: ${document.getElementById('statArea').innerText}
         async signUpWithEmail(email, password) {
             try {
                 const userCredential = await this.auth.createUserWithEmailAndPassword(email, password);
+                
+                // Send verification email
+                if (userCredential.user && !userCredential.user.emailVerified) {
+                    await userCredential.user.sendEmailVerification();
+                }
+
                 await this.db.collection('users').doc(userCredential.user.uid).set({
                     email: email,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -4617,14 +4696,51 @@ OpenArea: ${document.getElementById('statArea').innerText}
         }
     }
     
+    const LOCKED_MESSAGE = 'You need to login or register to use this.';
+
     function updateDownloadButtons() {
         // Update button styling and lock icons based on user permissions
+        const imgBtn = document.getElementById('downloadImgBtn');
+        const txtBtn = document.getElementById('downloadTxtBtn');
         const dxfBtn = document.getElementById('downloadDxfBtn');
         const svgBtn = document.getElementById('downloadSvgBtn');
+        const zipBtn = document.getElementById('downloadZipBtn');
+        const pngLockIcon = document.getElementById('pngLockIcon');
+        const txtLockIcon = document.getElementById('txtLockIcon');
         const dxfLockIcon = document.getElementById('dxfLockIcon');
         const svgLockIcon = document.getElementById('svgLockIcon');
         const zipLockIcon = document.getElementById('zipLockIcon');
-        
+        const emailLockIcon = document.getElementById('emailLockIcon');
+
+        // Map (.png) - show lock for guests
+        if (imgBtn) {
+            const canDownload = authManager.canDownload('png');
+            if (pngLockIcon) pngLockIcon.style.display = canDownload ? 'none' : 'block';
+            if (canDownload) {
+                imgBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+                imgBtn.classList.add('cursor-pointer');
+            } else {
+                imgBtn.classList.add('opacity-60', 'cursor-not-allowed');
+                imgBtn.classList.remove('cursor-pointer');
+            }
+        }
+        // Settings (.txt) - show lock for guests
+        if (txtBtn) {
+            const canDownload = authManager.canDownload('txt');
+            if (txtLockIcon) txtLockIcon.style.display = canDownload ? 'none' : 'block';
+            if (canDownload) {
+                txtBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+                txtBtn.classList.add('cursor-pointer');
+            } else {
+                txtBtn.classList.add('opacity-60', 'cursor-not-allowed');
+                txtBtn.classList.remove('cursor-pointer');
+            }
+        }
+        // Email - show lock when not logged in
+        if (emailLockIcon) {
+            emailLockIcon.style.display = authManager.currentUser ? 'none' : 'block';
+        }
+
         // DXF Button - always visible, show lock for guests
         if (dxfBtn) {
             dxfBtn.style.display = 'flex';
@@ -4660,7 +4776,6 @@ OpenArea: ${document.getElementById('statArea').innerText}
         }
         
         // ZIP Button - always visible, show lock for guests
-        const zipBtn = document.getElementById('downloadZipBtn');
         if (zipBtn) {
             zipBtn.style.display = 'flex';
             const canDownloadZip = authManager.canDownload('zip');
@@ -4682,14 +4797,18 @@ OpenArea: ${document.getElementById('statArea').innerText}
     // Handle download button clicks with permission check
     function handleDownloadClick(type) {
         if (!authManager.canDownload(type)) {
-            if (typeof showNotification === 'function') showNotification('Please register or login to download ' + type.toUpperCase() + ' files.', 'info');
+            if (typeof showNotification === 'function') showNotification(LOCKED_MESSAGE, 'info');
             showAuthModal();
             toggleDownloadsMenu(); // Close the dropdown
             return;
         }
         
         // User has permission, proceed with download using window functions for tracking
-        if (type === 'dxf') {
+        if (type === 'png') {
+            window.downloadImage();
+        } else if (type === 'txt') {
+            window.downloadSpecs();
+        } else if (type === 'dxf') {
             window.downloadDXF();
         } else if (type === 'svg') {
             window.downloadSVG();
@@ -4713,6 +4832,167 @@ OpenArea: ${document.getElementById('statArea').innerText}
             dropdown.classList.add('hidden');
         }
     });
+    
+    // --- Email Result (registered users only) ---
+    function handleEmailResultClick() {
+        if (!authManager.currentUser) {
+            if (typeof showNotification === 'function') showNotification(LOCKED_MESSAGE, 'info');
+            document.getElementById('emailLoginRequiredModal').classList.add('active');
+            return;
+        }
+        
+        // Pre-fill email with current user's email
+        document.getElementById('emailRecipient').value = authManager.currentUser.email || '';
+        document.getElementById('emailMessage').value = '';
+        
+        // Show the modal
+        document.getElementById('emailOptionsModal').classList.add('active');
+    }
+    
+    // Exposed for the modal button
+    window.submitEmailForm = async function() {
+        const toEmail = document.getElementById('emailRecipient').value;
+        const message = document.getElementById('emailMessage').value;
+        
+        if (!toEmail) {
+            if (typeof showNotification === 'function') showNotification('Please enter at least one email address.', 'error');
+            return;
+        }
+        
+        // Basic validation for comma-separated emails
+        const emails = toEmail.split(',').map(e => e.trim()).filter(e => e);
+        const invalid = emails.find(e => !e.includes('@'));
+        if (invalid) {
+            if (typeof showNotification === 'function') showNotification(`Invalid email: ${invalid}`, 'error');
+            return;
+        }
+        
+        document.getElementById('emailOptionsModal').classList.remove('active');
+        await sendEmailResult(toEmail, message);
+    };
+
+    async function sendEmailResult(toEmail, customMessage) {
+        if (!sourceImage) {
+            if (typeof showNotification === 'function') showNotification('Generate a pattern first, then use Email.', 'info');
+            return;
+        }
+        
+        // Use provided email or fallback to current user
+        const recipient = toEmail || authManager.currentUser.email;
+        const projectName = (projectNameInput && projectNameInput.value) ? projectNameInput.value.trim() : DEFAULT_PROJECT_NAME;
+        const safeName = projectName || DEFAULT_PROJECT_NAME;
+        
+        const imageDataUrl = getPNGDataURL();
+        const settingsText = typeof getTXTContent === 'function' ? getTXTContent() : '';
+        if (!imageDataUrl) {
+            if (typeof showNotification === 'function') showNotification('Could not generate image.', 'error');
+            return;
+        }
+        
+        const stats = typeof getFooterStatistics === 'function' ? getFooterStatistics() : { panels: 0, holes: 0, opening: '0%', minHole: '0', maxHole: '0', spacing: '0' };
+        
+        // Helper to format settings as HTML
+        const formatSettingsToHtml = (text) => {
+            if (!text) return '';
+            const lines = text.split('\n');
+            let html = '<div style="background:#f8fafc; padding:12px; border:1px solid #e2e8f0; border-radius:4px; font-family:monospace; font-size:0.85rem; color:#334155;">';
+            let inSection = false;
+            
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line) return;
+                if (line.startsWith('[') && line.endsWith(']')) {
+                    if (inSection) html += '</table>';
+                    html += `<div style="margin-top:12px; margin-bottom:4px; font-weight:bold; color:#1e40af;">${line}</div>`;
+                    html += '<table style="width:100%; border-collapse:collapse; margin-bottom:8px;">';
+                    inSection = true;
+                } else if (line.includes(':')) {
+                    const parts = line.split(':');
+                    const key = parts[0].trim();
+                    const val = parts.slice(1).join(':').trim();
+                    if (inSection) {
+                         html += `<tr><td style="padding:2px 4px; border-bottom:1px solid #f1f5f9; color:#64748b; width:40%;">${key}</td><td style="padding:2px 4px; border-bottom:1px solid #f1f5f9; font-weight:500;">${val}</td></tr>`;
+                    } else {
+                         html += `<div><strong>${key}:</strong> ${val}</div>`;
+                    }
+                }
+            });
+            if (inSection) html += '</table>';
+            html += '</div>';
+            return html;
+        };
+        
+        const settingsHtml = formatSettingsToHtml(settingsText);
+        
+        // Build HTML body
+        let messageHtml = '';
+        if (customMessage) {
+            const safeMessage = customMessage.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;').replace(/\n/g, '<br>');
+            messageHtml = `<div style="background-color:#f8fafc; padding:16px; border-left:4px solid #3b82f6; margin-bottom:24px; color:#334155;"><strong>Note:</strong><br>${safeMessage}</div>`;
+        }
+
+        const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><style>body{font-family:sans-serif;max-width:640px;margin:20px auto;padding:0 16px;color:#334155;} h1{color:#1e40af;font-size:1.25rem;} table{border-collapse:collapse;width:100%;margin:16px 0;} th,td{border:1px solid #e2e8f0;padding:8px 12px;text-align:left;} th{background:#f8fafc;} .footer{margin-top:24px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:0.875rem;color:#64748b;}</style></head>
+<body>
+<h1>Perforated Panel Designer – Result</h1>
+<p><strong>Project:</strong> ${safeName}</p>
+<p style="font-size:0.9em; color:#64748b;">Sent by: ${authManager.currentUser ? authManager.currentUser.email : 'Unknown User'}</p>
+${messageHtml}
+<p>Your design result is attached as an image.</p>
+
+<h3>Summary Statistics</h3>
+<table>
+<tr><th>Panels</th><td>${stats.panels}</td></tr>
+<tr><th>Holes</th><td>${(stats.holes || 0).toLocaleString()}</td></tr>
+<tr><th>Opening</th><td>${stats.opening || '0%'}</td></tr>
+<tr><th>Min Hole</th><td>${stats.minHole || '0'} mm</td></tr>
+<tr><th>Max Hole</th><td>${stats.maxHole || '0'} mm</td></tr>
+<tr><th>Spacing</th><td>${stats.spacing || '0'} mm</td></tr>
+</table>
+
+<h3>Full Configuration</h3>
+${settingsHtml}
+
+<div class="footer">
+<p>Website: <a href="${EMAIL_WEBSITE_URL}">${EMAIL_WEBSITE_URL}</a></p>
+<p>${EMAIL_DESIGNED_BY}</p>
+</div>
+</body>
+</html>`;
+        
+        const subject = `Perforated Panel Designer – ${safeName}`;
+        if (typeof showNotification === 'function') showNotification('Sending email…', 'info');
+        
+        try {
+            const res = await fetch('/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    to: recipient,
+                    subject: subject,
+                    html: htmlBody,
+                    imageBase64: imageDataUrl,
+                    settingsText: settingsText,
+                    projectName: safeName
+                })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                console.error('Email error:', data);
+                const errorMsg = data.error || (data.message ? data.message : 'Unknown error');
+                if (typeof showNotification === 'function') {
+                     showNotification(`Error: ${typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : errorMsg}`, 'error');
+                }
+                return;
+            }
+            if (typeof showNotification === 'function') showNotification('Email sent to ' + recipient, 'success');
+        } catch (err) {
+            console.error('Fetch error:', err);
+            if (typeof showNotification === 'function') showNotification('Could not send email. Network error.', 'error');
+        }
+    }
     
     function showAuthModal() {
         document.getElementById('authModal').classList.add('active');
@@ -4767,6 +5047,9 @@ OpenArea: ${document.getElementById('statArea').innerText}
         const result = await authManager.signUpWithEmail(email, password);
         if (result.success) {
             closeAuthModal();
+            if (typeof showNotification === 'function') {
+                showNotification('Registration successful! A verification email has been sent.', 'success');
+            }
         } else {
             errorEl.textContent = result.error;
             errorEl.classList.add('show');
@@ -4874,7 +5157,7 @@ OpenArea: ${document.getElementById('statArea').innerText}
     const originalDownloadImage = downloadImage;
     window.downloadImage = async function() {
         if (!authManager.canDownload('png')) {
-            if (typeof showNotification === 'function') showNotification('Please login to download PNG files.', 'info');
+            if (typeof showNotification === 'function') showNotification(LOCKED_MESSAGE, 'info');
             showAuthModal();
             return;
         }
@@ -4892,7 +5175,7 @@ OpenArea: ${document.getElementById('statArea').innerText}
     const originalDownloadSpecs = downloadSpecs;
     window.downloadSpecs = async function() {
         if (!authManager.canDownload('txt')) {
-            if (typeof showNotification === 'function') showNotification('Please login to download settings files.', 'info');
+            if (typeof showNotification === 'function') showNotification(LOCKED_MESSAGE, 'info');
             showAuthModal();
             return;
         }
@@ -4910,7 +5193,7 @@ OpenArea: ${document.getElementById('statArea').innerText}
     const originalDownloadDXF = downloadDXF;
     window.downloadDXF = async function() {
         if (!authManager.canDownload('dxf')) {
-            if (typeof showNotification === 'function') showNotification('Please register or login to download DXF files.', 'info');
+            if (typeof showNotification === 'function') showNotification(LOCKED_MESSAGE, 'info');
             showAuthModal();
             return;
         }
@@ -4926,7 +5209,7 @@ OpenArea: ${document.getElementById('statArea').innerText}
     const originalDownloadSVG = downloadSVG;
     window.downloadSVG = async function() {
         if (!authManager.canDownload('svg')) {
-            if (typeof showNotification === 'function') showNotification('Please register or login to download SVG files.', 'info');
+            if (typeof showNotification === 'function') showNotification(LOCKED_MESSAGE, 'info');
             showAuthModal();
             return;
         }
@@ -4942,7 +5225,7 @@ OpenArea: ${document.getElementById('statArea').innerText}
     const originalDownloadZIP = downloadZIP;
     window.downloadZIP = async function() {
         if (!authManager.canDownload('zip')) {
-            if (typeof showNotification === 'function') showNotification('Please register or login to download ZIP files.', 'info');
+            if (typeof showNotification === 'function') showNotification(LOCKED_MESSAGE, 'info');
             showAuthModal();
             return;
         }
@@ -4989,6 +5272,7 @@ OpenArea: ${document.getElementById('statArea').innerText}
     window.closeRawPhotoModal = closeRawPhotoModal;
     window.showNotification = showNotification;
     window.handleDownloadClick = handleDownloadClick;
+    window.handleEmailResultClick = handleEmailResultClick;
 
     // --- Resizable Footer Logic (run after DOM so footer and buttons exist) ---
     function initResizableFooter() {
