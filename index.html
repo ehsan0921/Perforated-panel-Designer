@@ -1781,7 +1781,15 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         <div id="errSplitH" class="error-text"></div>
     </div>
     
-    <h2>Margins Per Sheet (mm)</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <h2 style="margin-bottom: 0;">Margins Per Sheet (mm)</h2>
+        <button id="lockMarginsBtn" type="button" title="Lock all margins" style="background: none; border: none; cursor: pointer; color: #64748b; padding: 4px;">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+            </svg>
+        </button>
+    </div>
     <div class="control-group">
          <div class="row">
             <div>
@@ -2673,6 +2681,48 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     inputs.max.addEventListener('blur', applyMinMaxOrder);
     inputs.min.addEventListener('keydown', (e) => { if (e.key === 'Enter') { applyMinMaxOrder(); inputs.min.blur(); } });
     inputs.max.addEventListener('keydown', (e) => { if (e.key === 'Enter') { applyMinMaxOrder(); inputs.max.blur(); } });
+
+    // --- Margin Lock Logic ---
+    let marginsLocked = false;
+    const lockMarginsBtn = document.getElementById('lockMarginsBtn');
+    
+    function updateMarginsLockUI() {
+        if (!lockMarginsBtn) return;
+        lockMarginsBtn.innerHTML = marginsLocked
+            ? '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>'
+            : '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>';
+        lockMarginsBtn.style.color = marginsLocked ? '#2563eb' : '#64748b';
+        lockMarginsBtn.setAttribute('title', marginsLocked ? 'Unlock margins' : 'Lock margins (sync all)');
+    }
+
+    if (lockMarginsBtn) {
+        lockMarginsBtn.addEventListener('click', () => {
+            marginsLocked = !marginsLocked;
+            updateMarginsLockUI();
+            if (marginsLocked) {
+                // Sync all to Top margin as base
+                const val = inputs.mT.value;
+                inputs.mB.value = val;
+                inputs.mL.value = val;
+                inputs.mR.value = val;
+                saveSettings();
+                setTimeout(generatePerforation, 10);
+            }
+        });
+    }
+
+    // Sync margins on input if locked
+    const marginInputs = [inputs.mT, inputs.mB, inputs.mL, inputs.mR];
+    marginInputs.forEach(inp => {
+        inp.addEventListener('input', (e) => {
+            if (marginsLocked) {
+                const val = e.target.value;
+                marginInputs.forEach(other => {
+                    if (other !== e.target) other.value = val;
+                });
+            }
+        });
+    });
 
     // Min/Max hole size step buttons (+ / −)
     const holeSizeDecBtn = document.getElementById('holeSizeDecBtn');
