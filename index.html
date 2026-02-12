@@ -4949,6 +4949,82 @@ OpenArea: ${document.getElementById('statArea').innerText}
     window.closeRawPhotoModal = closeRawPhotoModal;
     window.showNotification = showNotification;
     window.handleDownloadClick = handleDownloadClick;
+
+    // --- Resizable Footer Logic ---
+    const footerEl = document.querySelector('footer');
+    if (footerEl) {
+        // Prepare footer styles for resizing
+        footerEl.style.position = 'relative';
+        footerEl.style.minHeight = '30px';
+        
+        // Create resize handle
+        const handle = document.createElement('div');
+        Object.assign(handle.style, {
+            position: 'absolute',
+            top: '0',
+            left: '0',
+            right: '0',
+            height: '6px',
+            cursor: 'ns-resize',
+            zIndex: '100',
+            backgroundColor: 'transparent' // invisible but draggable
+        });
+        handle.title = 'Drag to resize footer';
+        
+        // Add visual indicator on hover
+        handle.addEventListener('mouseenter', () => handle.style.backgroundColor = 'rgba(0,0,0,0.05)');
+        handle.addEventListener('mouseleave', () => handle.style.backgroundColor = 'transparent');
+        
+        footerEl.prepend(handle);
+
+        let isResizing = false;
+        let startY = 0;
+        let startHeight = 0;
+
+        handle.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            startY = e.clientY;
+            startHeight = footerEl.offsetHeight;
+            document.body.style.cursor = 'ns-resize';
+            // Prevent text selection during drag
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            const diff = startY - e.clientY;
+            const newHeight = Math.max(30, Math.min(400, startHeight + diff));
+            
+            footerEl.style.height = newHeight + 'px';
+            
+            // Dynamic scaling logic
+            // Base: 40px height -> ~13.6px font (0.85rem)
+            // Scale factor ~ 0.34
+            const fontSize = Math.max(12, newHeight * 0.34);
+            
+            const content = footerEl.querySelector('.footer-one-line');
+            if (content) {
+                content.style.fontSize = fontSize + 'px';
+                // Scale gaps proportionally
+                content.style.gap = (fontSize * 1.5) + 'px';
+                const stats = footerEl.querySelector('.footer-stats-left');
+                if (stats) stats.style.gap = (fontSize * 1.5) + 'px';
+                // Scale progress bar width and height
+                const progBar = document.getElementById('footerProgressBar');
+                if (progBar) {
+                    progBar.style.width = (110 * (fontSize / 13.6)) + 'px';
+                    progBar.style.height = (5 * (fontSize / 13.6)) + 'px';
+                }
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                document.body.style.cursor = '';
+            }
+        });
+    }
 </script>
 
 </div> <!-- End main-wrapper -->
