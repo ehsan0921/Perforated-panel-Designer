@@ -1752,6 +1752,33 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     </div>
 </div>
 
+<!-- Contact / Leave a message modal -->
+<div id="contactModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h2>Leave a message</h2>
+            <span class="modal-close" onclick="document.getElementById('contactModal').classList.remove('active')">&times;</span>
+        </div>
+        <p style="margin:0 0 1rem 0; color:#64748b; font-size:0.9rem;">Send a message to the designer. A copy will be emailed to you.</p>
+        <div style="margin-bottom:1rem;">
+            <label for="contactName" style="display:block; margin-bottom:0.5rem; font-weight:500; color:#475569;">Your name (optional)</label>
+            <input type="text" id="contactName" placeholder="Your name" class="auth-input" style="width:100%;">
+        </div>
+        <div style="margin-bottom:1rem;">
+            <label for="contactEmail" style="display:block; margin-bottom:0.5rem; font-weight:500; color:#475569;">Your email <span style="color:#dc2626;">*</span></label>
+            <input type="email" id="contactEmail" placeholder="your@email.com" class="auth-input" style="width:100%;" required>
+        </div>
+        <div style="margin-bottom:1.5rem;">
+            <label for="contactMessage" style="display:block; margin-bottom:0.5rem; font-weight:500; color:#475569;">Message <span style="color:#dc2626;">*</span></label>
+            <textarea id="contactMessage" rows="4" placeholder="Your message..." class="auth-input" style="width:100%; resize:vertical; font-family:inherit;" required></textarea>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+            <button type="button" class="btn-secondary" onclick="document.getElementById('contactModal').classList.remove('active')">Cancel</button>
+            <button type="button" id="contactSendBtn" class="btn-primary" onclick="window.submitContactForm()">Send</button>
+        </div>
+    </div>
+</div>
+
 <!-- Raw photo modal (input image only, no pattern) -->
 <div id="rawPhotoModal" class="modal">
     <div class="modal-content" style="max-width:90vw; max-height:90vh; display:flex; flex-direction:column;">
@@ -2184,6 +2211,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     const EMAIL_SMTP_HOST = 'smtp.mailgun.org';
     const EMAIL_WEBSITE_URL = 'https://ppd.ehsanmo.me/';
     const EMAIL_DESIGNED_BY = 'Designed by Ehsan Mokhtary';
+    const CONTACT_SUPERADMIN_EMAIL = 'Ehsan0921@gmail.com';
 
     // --- LOCAL STORAGE ---
     function saveSettings() {
@@ -4993,6 +5021,72 @@ ${settingsHtml}
             if (typeof showNotification === 'function') showNotification('Could not send email. Network error.', 'error');
         }
     }
+
+    window.submitContactForm = async function() {
+        const name = (document.getElementById('contactName') && document.getElementById('contactName').value) ? document.getElementById('contactName').value.trim() : '';
+        const email = document.getElementById('contactEmail') && document.getElementById('contactEmail').value ? document.getElementById('contactEmail').value.trim() : '';
+        const message = document.getElementById('contactMessage') && document.getElementById('contactMessage').value ? document.getElementById('contactMessage').value.trim() : '';
+
+        if (!email || !email.includes('@')) {
+            if (typeof showNotification === 'function') showNotification('Please enter a valid email address.', 'error');
+            return;
+        }
+        if (!message) {
+            if (typeof showNotification === 'function') showNotification('Please enter a message.', 'error');
+            return;
+        }
+
+        const safeName = name || 'Someone';
+        const safeMessage = message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/\n/g, '<br>');
+        const htmlBody = `
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:sans-serif;max-width:640px;margin:20px auto;padding:0 16px;color:#334155;}</style></head><body>
+<h2>Message from Perforated Panel Designer</h2>
+<p><strong>From:</strong> ${safeName} &lt;${email}&gt;</p>
+<p><strong>Message:</strong></p>
+<p>${safeMessage}</p>
+<hr style="margin:20px 0; border:none; border-top:1px solid #e2e8f0;">
+<p style="font-size:0.85rem; color:#64748b;">Sent via <a href="https://ppd.ehsanmo.me/">https://ppd.ehsanmo.me/</a></p>
+</body></html>`;
+
+        const subjectToAdmin = `Perforated Panel Designer – Message from ${safeName}`;
+        const subjectToUser = `Copy of your message – Perforated Panel Designer`;
+
+        const sendBtn = document.getElementById('contactSendBtn');
+        if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = 'Sending…'; }
+        if (typeof showNotification === 'function') showNotification('Sending…', 'info');
+
+        try {
+            const res1 = await fetch('/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ to: CONTACT_SUPERADMIN_EMAIL, subject: subjectToAdmin, html: htmlBody })
+            });
+            if (!res1.ok) {
+                const d = await res1.json().catch(() => ({}));
+                throw new Error(d.error || 'Failed to send to admin');
+            }
+
+            const res2 = await fetch('/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ to: email, subject: subjectToUser, html: htmlBody })
+            });
+            if (!res2.ok) {
+                const d = await res2.json().catch(() => ({}));
+                throw new Error(d.error || 'Failed to send copy to you');
+            }
+
+            document.getElementById('contactModal').classList.remove('active');
+            if (document.getElementById('contactName')) document.getElementById('contactName').value = '';
+            if (document.getElementById('contactEmail')) document.getElementById('contactEmail').value = '';
+            if (document.getElementById('contactMessage')) document.getElementById('contactMessage').value = '';
+            if (typeof showNotification === 'function') showNotification('Message sent. A copy has been sent to your email.', 'success');
+        } catch (err) {
+            if (typeof showNotification === 'function') showNotification(err.message || 'Failed to send message.', 'error');
+        } finally {
+            if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = 'Send'; }
+        }
+    };
     
     function showAuthModal() {
         document.getElementById('authModal').classList.add('active');
@@ -5384,7 +5478,7 @@ ${settingsHtml}
                 <span class="footer-progress-fill" id="footerProgressFill" style="display: inline-block; border-radius: 2px; vertical-align: middle;"></span>
             </span>
         </span>
-        <span class="footer-credit">Designed by Ehsan Mokhtary</span>
+        <button type="button" id="footerCreditBtn" class="footer-credit" style="background:inherit; border:none; cursor:pointer; padding:4px 10px; font:inherit; color:inherit; border-radius:4px;" title="Leave a message" onclick="document.getElementById('contactModal').classList.add('active')">Designed by Ehsan Mokhtary</button>
     </div>
 </footer>
 
