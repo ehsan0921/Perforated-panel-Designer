@@ -7,13 +7,14 @@ import { BackgroundCanvas } from "@/components/BackgroundCanvas";
 import { Header } from "@/components/Header";
 import { AuthModal } from "@/components/AuthModal";
 import { Reveal } from "@/components/Reveal";
+import { CinematicScroll } from "@/components/CinematicScroll";
 
 const LINKEDIN = "https://www.linkedin.com/in/ehsan-mokhtary/";
 const YOUTUBE = "https://www.youtube.com/@ehsanmokhtaryArchitect";
 const FOOD4RHINO = "https://www.food4rhino.com/en/app/rhinoplus";
 const EMAIL = "Ehsan0921@gmail.com";
 type PortfolioProject = { id?: string; image: string; secondaryImage?: string; title: string; place: string; type: string; stat: string; link: string; source: string; order?: number };
-type ThemeName = "technical" | "apple";
+type ThemeName = "technical" | "apple" | "cinematic";
 type MediaStory = { image: string; label: string; title: string; description: string; detail?: string; wide?: boolean };
 type HobbyItem = { title: string; description: string; url: string; label: string };
 type ThemeConfig = { heroImageUrl: string; portraitImageUrl: string; accentColor: string; heroLine1: string; heroLine2: string; heroSubtitle: string; showParticles: boolean; showFloatingPanels: boolean; mediaRail: MediaStory[]; hobbies: HobbyItem[] };
@@ -34,6 +35,7 @@ const DEFAULT_THEMES: Record<ThemeName, ThemeConfig> = {
     { image: "/projects/project-dove.jpg", label: "CURRENT PROJECT · PERTH", title: "Project Dove", description: "Expressive geometry translated into coordinated façade assemblies.", detail: "Project Dove demonstrates how a distinctive architectural envelope depends on rigorous model control. Computational workflows help rationalise geometry while BIM coordination manages structure, brackets, panels and information through the delivery sequence." },
     { image: "/projects/women-babies-hospital.png", label: "CURRENT PROJECT · PERTH", title: "Women and Babies Hospital", description: "Major healthcare delivery with façade information under control.", detail: "Large healthcare projects demand reliable model governance across design, procurement and construction. The façade workflow brings LOD, LOI, metadata, interfaces and issue ownership together so decisions remain traceable and buildable.", wide: true },
   ], hobbies: DEFAULT_HOBBIES },
+  cinematic: { heroImageUrl: "/projects/atlassian-central-aerial.avif", portraitImageUrl: "/ehsan-mokhtary-portrait-Hotizontal.png", accentColor: "#ff4d00", heroLine1: "Geometry, directed.", heroLine2: "Delivery, resolved.", heroSubtitle: "I direct the digital systems behind complex facades—connecting design intent, coordination and fabrication in one controlled frame.", showParticles: false, showFloatingPanels: false, mediaRail: [], hobbies: DEFAULT_HOBBIES },
 };
 const PROJECT_STORY_ORDER = ["Atlassian Central — façade in delivery", "Atlassian Central — climate envelope", "New Dunedin Hospital", "Project Dove", "Women and Babies Hospital"];
 const sortProjectStoriesFirst = (stories: MediaStory[]) => stories.sort((a, b) => {
@@ -111,8 +113,9 @@ export function HomePage() {
       const savedTechnical = { ...DEFAULT_THEMES.technical, ...(data.technical || {}) };
       savedTechnical.hobbies = (savedTechnical.hobbies || []).filter((item) => item.title !== "Gym Records");
       savedApple.hobbies = (savedApple.hobbies || []).filter((item) => item.title !== "Gym Records");
-      setThemes({ technical: savedTechnical, apple: savedApple });
-      setTheme(data.activeTheme === "technical" ? "technical" : "apple");
+      setThemes({ technical: savedTechnical, apple: savedApple, cinematic: DEFAULT_THEMES.cinematic });
+      const localTheme = window.localStorage.getItem("em-theme");
+      setTheme(localTheme === "technical" || localTheme === "apple" || localTheme === "cinematic" ? localTheme : (data.activeTheme === "technical" ? "technical" : "apple"));
     }).catch(() => undefined).finally(() => setThemeResolved(true));
   }, []);
   useEffect(() => {
@@ -160,6 +163,11 @@ export function HomePage() {
     window.open(url, "_blank", "noopener,noreferrer");
   };
   const activeTheme = themes[theme];
+  const chooseTheme = (next: ThemeName) => {
+    setTheme(next);
+    setActiveStory(0);
+    window.localStorage.setItem("em-theme", next);
+  };
   const scrollStoryRail = useCallback((index: number) => {
     const rail = mediaRailRef.current;
     const firstSet = rail?.firstElementChild as HTMLElement | null;
@@ -232,6 +240,8 @@ export function HomePage() {
           </div>
         </section>
 
+        {theme === "cinematic" && <CinematicScroll />}
+
         <section className="apple-showcase" aria-label="Featured visual stories">
           <div className="apple-rail-heading"><div><span>FEATURED</span><h2>Stories in design.</h2></div><div className="apple-rail-actions"><p>Explore the person, process and projects behind the models.</p><nav aria-label="Featured story controls"><button type="button" onClick={() => showStory(activeStory - 1)} aria-label="Previous story">←</button><span>{String(activeStory + 1).padStart(2, "0")} / {String(activeTheme.mediaRail.length).padStart(2, "0")}</span><button type="button" onClick={() => showStory(activeStory + 1)} aria-label="Next story">→</button></nav></div></div>
           <div className="apple-rail-window" onMouseEnter={() => setRailPaused(true)} onMouseLeave={() => setRailPaused(false)}>
@@ -292,6 +302,10 @@ export function HomePage() {
         <section id="contact" className="contact-zone border border-white/10 px-5 py-24 text-center sm:px-10 lg:px-16 lg:py-40"><Reveal><p className="section-index">HAVE A COMPLEX FACADE?</p><h2>Let’s make it<br /><span>clear, coordinated, buildable.</span></h2><div className="mt-10 flex flex-wrap justify-center gap-3"><a className="button-primary" href={`mailto:${EMAIL}`}>Start a conversation ↗</a>{phone ? <a className="button-ghost phone-revealed" href={`tel:${phone}`}>{phone} <span>CALL ↗</span></a> : <button className="button-ghost" type="button" onClick={revealPhone}>Reveal phone <span>CLICK ↗</span></button>}<a className="button-ghost" href={LINKEDIN} target="_blank" rel="noreferrer">LinkedIn</a></div><p className="phone-note">Phone number is protected and only loaded after you click.</p></Reveal></section>
       </main>
       <footer className="flex flex-col gap-4 border-x border-white/10 px-6 py-8 text-[11px] tracking-[.16em] text-white/35 sm:flex-row sm:justify-between"><span>© {new Date().getFullYear()} EHSAN MOKHTARY</span><span>FACADE BIM / COMPUTATION / DELIVERY</span><span>MELBOURNE, AU</span></footer>
+    </div>
+    <div className="theme-dock" role="group" aria-label="Choose website theme">
+      <span>VIEW</span>
+      {([["technical","Technical"], ["apple","Editorial"], ["cinematic","Cinema"]] as [ThemeName,string][]).map(([value,label]) => <button type="button" className={theme === value ? "is-active" : ""} onClick={() => chooseTheme(value)} aria-pressed={theme === value} key={value}>{label}</button>)}
     </div>
     <AuthModal open={authOpen} initialMode={authMode} onClose={() => setAuthOpen(false)} />
   </div>;
