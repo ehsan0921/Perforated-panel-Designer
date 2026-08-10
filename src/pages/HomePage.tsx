@@ -223,7 +223,7 @@ export function HomePage() {
       <main>
         <section className="hero-grid relative min-h-[820px] overflow-hidden border-x border-white/10 px-5 pb-16 pt-20 sm:px-10 lg:px-16 lg:pt-28">
           <div className="hero-image absolute inset-0" aria-hidden />
-          {theme === "cinematic" && <video className="cinema-cover-video" src="/cinema-portrait-loop.mp4" poster="/Ehsan-Banner-Orange-Glass-side-2X.png" autoPlay loop muted playsInline preload="metadata" aria-hidden />}
+          {theme === "cinematic" && <div className="cinema-portrait-still" aria-hidden />}
           <div className="hero-scan absolute inset-0" aria-hidden />
           {activeTheme.showFloatingPanels && <><div className="hero-float hero-float-a" aria-hidden><span>CLASH / 014</span><b>RESOLVED</b></div><div className="hero-float hero-float-b" aria-hidden><span>MODEL STATE</span><b>FEDERATED</b></div><div className="hero-float hero-float-c" aria-hidden><span>LOD</span><b>350</b></div></>}
           <div className="relative z-10 max-w-4xl">
