@@ -71,6 +71,13 @@ export function BracketLab() {
           <div className={`bracket-image-wrap${videoReady ? " is-video-ready" : ""}`}>
             <img src="/facade-j-bracket-higgsfield-v3.webp" alt="Galvanized façade J-bracket coordinated between an aluminium curtain-wall mullion and concrete slab edge" />
             <video ref={videoRef} src="/facade-j-bracket-higgsfield-scrub.mp4" poster="/facade-j-bracket-higgsfield-v3.webp" muted playsInline preload="auto" tabIndex={-1} aria-hidden />
+            <div className="bracket-part-labels" aria-hidden>
+              <span className="part-label part-mullion"><strong>CURTAIN-WALL MULLION</strong><small>Façade set-out datum</small></span>
+              <span className="part-label part-j-bracket"><strong>GALVANISED J-BRACKET</strong><small>Adjustable façade connection</small></span>
+              <span className="part-label part-slots"><strong>SLOTTED BASE PLATE</strong><small>Horizontal tolerance adjustment</small></span>
+              <span className="part-label part-anchors"><strong>ANCHOR / CAST-IN ZONE</strong><small>Keep clear of reinforcement</small></span>
+              <span className="part-label part-slab"><strong>CONCRETE SLAB EDGE</strong><small>Verify profile before pour</small></span>
+            </div>
           </div>
           <div className="check-slab-plane" aria-hidden><span>TOP OF SLAB / RL DATUM</span></div>
           <div className="check-facade-datum" aria-hidden><span>CURTAIN WALL DATUM</span></div>
