@@ -8,6 +8,8 @@ import { Header } from "@/components/Header";
 import { AuthModal } from "@/components/AuthModal";
 import { Reveal } from "@/components/Reveal";
 import { CinematicScroll } from "@/components/CinematicScroll";
+import { InteractionLayer } from "@/components/InteractionLayer";
+import { BracketLab } from "@/components/BracketLab";
 
 const LINKEDIN = "https://www.linkedin.com/in/ehsan-mokhtary/";
 const YOUTUBE = "https://www.youtube.com/@ehsanmokhtaryArchitect";
@@ -115,7 +117,7 @@ export function HomePage() {
       savedApple.hobbies = (savedApple.hobbies || []).filter((item) => item.title !== "Gym Records");
       setThemes({ technical: savedTechnical, apple: savedApple, cinematic: DEFAULT_THEMES.cinematic });
       const localTheme = window.localStorage.getItem("em-theme");
-      setTheme(localTheme === "technical" || localTheme === "apple" || localTheme === "cinematic" ? localTheme : (data.activeTheme === "technical" ? "technical" : "apple"));
+      setTheme(localTheme === "technical" || localTheme === "apple" || localTheme === "cinematic" ? localTheme : "cinematic");
     }).catch(() => undefined).finally(() => setThemeResolved(true));
   }, []);
   useEffect(() => {
@@ -210,6 +212,7 @@ export function HomePage() {
   const additionalProducts = products.filter((item) => !hobbyKeys.has((item.title || "").toLowerCase()) && !hobbyKeys.has((item.url || "").toLowerCase()));
 
   return <div className={`site-shell theme-${theme} ${introComplete ? "page-ready" : "page-loading"} min-h-screen overflow-x-hidden text-[#deddd8]`} data-theme={theme} style={{ "--accent": activeTheme.accentColor, "--theme-hero": `url("${activeTheme.heroImageUrl}")` } as React.CSSProperties}>
+    <InteractionLayer />
     <div className="site-loader" role="status" aria-label="Loading portfolio" aria-hidden={introComplete}>
       <div className="loader-orbit"><i /><i /><i /><span>EM</span></div>
       <p>COORDINATING THE MODEL</p>
@@ -257,6 +260,8 @@ export function HomePage() {
         <section className="statement border-x border-b border-white/10 px-5 py-24 sm:px-10 lg:px-16 lg:py-36">
           <Reveal><p className="section-index">00 / POSITION</p><h2 className="max-w-6xl">BIM is not a model.<br /><span>It is a controlled decision system.</span></h2><div className="mt-12 grid gap-8 border-t border-white/10 pt-8 md:grid-cols-3"><p className="text-white/45">EHSAN MOKHTARY<br />Facade BIM Manager<br />Computational Designer</p><p className="text-lg leading-relaxed text-white/70 md:col-span-2">I connect design intent to fabrication reality. My work brings geometry, information and project teams into one governed workflow—then uses computation to remove repetition, expose risk early and make every handover more reliable.</p></div></Reveal>
         </section>
+
+        <BracketLab />
 
         <section className="identity-zone border-x border-b border-white/10">
           <Reveal className="identity-photo"><img src={activeTheme.portraitImageUrl} alt="Ehsan Mokhtary, Facade BIM Manager" loading="lazy" /><div className="portrait-reticle" aria-hidden /><span className="portrait-code">EM / PROFILE_01</span></Reveal>
