@@ -72,11 +72,11 @@ export function BracketLab() {
             <img src="/facade-j-bracket-higgsfield-v3.webp" alt="Galvanized façade J-bracket coordinated between an aluminium curtain-wall mullion and concrete slab edge" />
             <video ref={videoRef} src="/facade-j-bracket-higgsfield-scrub.mp4" poster="/facade-j-bracket-higgsfield-v3.webp" muted playsInline preload="auto" tabIndex={-1} aria-hidden />
             <div className="bracket-part-labels" aria-hidden>
-              <span className="part-label part-mullion"><strong>CURTAIN-WALL MULLION</strong><small>Façade set-out datum</small></span>
-              <span className="part-label part-j-bracket"><strong>GALVANISED J-BRACKET</strong><small>Adjustable façade connection</small></span>
-              <span className="part-label part-slots"><strong>SLOTTED BASE PLATE</strong><small>Horizontal tolerance adjustment</small></span>
-              <span className="part-label part-anchors"><strong>ANCHOR / CAST-IN ZONE</strong><small>Keep clear of reinforcement</small></span>
-              <span className="part-label part-slab"><strong>CONCRETE SLAB EDGE</strong><small>Verify profile before pour</small></span>
+              <span className="part-label part-mullion"><strong>FAÇADE LINE CHECK — BIM</strong><small>Confirm grid line, set-out and façade offset</small></span>
+              <span className="part-label part-j-bracket"><strong>BRACKET RL CHECK</strong><small>Verify bracket level against façade datum</small></span>
+              <span className="part-label part-slots"><strong>FAÇADE–SLAB GAP CHECK</strong><small>Actual gap ≥ required clearance</small></span>
+              <span className="part-label part-anchors"><strong>BOLT DISTANCE CHECK</strong><small>Verify centres, edge distance and access</small></span>
+              <span className="part-label part-slab"><strong>SLAB CHECK — BIM MODEL</strong><small>Confirm slab-edge profile and projection</small></span>
             </div>
           </div>
           <div className="check-slab-plane" aria-hidden><span>TOP OF SLAB / RL DATUM</span></div>
