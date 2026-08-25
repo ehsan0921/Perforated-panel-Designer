@@ -10,24 +10,41 @@ const checks = [
 export function BracketLab() {
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef(0);
   const [active, setActive] = useState(0);
+  const [videoReady, setVideoReady] = useState(false);
 
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
+    const video = videoRef.current;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => {
       const rect = section.getBoundingClientRect();
       const travel = Math.max(1, section.offsetHeight - window.innerHeight);
       const progress = Math.min(1, Math.max(0, -rect.top / travel));
       section.style.setProperty("--bracket-progress", progress.toFixed(4));
       setActive(Math.min(checks.length - 1, Math.floor(progress * checks.length)));
+      if (video && !reducedMotion.matches && Number.isFinite(video.duration) && video.duration > 0 && !video.seeking) {
+        const targetTime = progress * Math.max(0, video.duration - 0.04);
+        if (Math.abs(video.currentTime - targetTime) > 0.025) video.currentTime = targetTime;
+      }
     };
     const onScroll = () => { cancelAnimationFrame(frameRef.current); frameRef.current = requestAnimationFrame(update); };
+    const onVideoReady = () => { setVideoReady(true); update(); };
     update();
+    video?.addEventListener("loadedmetadata", onVideoReady);
+    video?.addEventListener("canplay", onVideoReady, { once: true });
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
-    return () => { cancelAnimationFrame(frameRef.current); window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll); };
+    return () => {
+      cancelAnimationFrame(frameRef.current);
+      video?.removeEventListener("loadedmetadata", onVideoReady);
+      video?.removeEventListener("canplay", onVideoReady);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
   }, []);
 
   const move = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -51,7 +68,10 @@ export function BracketLab() {
         <div className="bracket-grid" aria-hidden />
         <div className="bracket-visual">
           <div className="bracket-halo" aria-hidden />
-          <div className="bracket-image-wrap"><img src="/facade-j-bracket-assembly-v2.webp" alt="Galvanized façade J-bracket between an aluminium curtain-wall mullion and concrete slab edge" /></div>
+          <div className={`bracket-image-wrap${videoReady ? " is-video-ready" : ""}`}>
+            <img src="/facade-j-bracket-higgsfield-v3.webp" alt="Galvanized façade J-bracket coordinated between an aluminium curtain-wall mullion and concrete slab edge" />
+            <video ref={videoRef} src="/facade-j-bracket-higgsfield-scrub.mp4" poster="/facade-j-bracket-higgsfield-v3.webp" muted playsInline preload="auto" tabIndex={-1} aria-hidden />
+          </div>
           <div className="check-slab-plane" aria-hidden><span>TOP OF SLAB / RL DATUM</span></div>
           <div className="check-facade-datum" aria-hidden><span>CURTAIN WALL DATUM</span></div>
           <div className="check-clearance" aria-hidden><i /><b /><span>MODELLED CLEARANCE<br /><strong>ACTUAL ≥ REQUIRED</strong></span></div>
