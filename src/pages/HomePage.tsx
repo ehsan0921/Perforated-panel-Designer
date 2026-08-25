@@ -37,7 +37,7 @@ const DEFAULT_THEMES: Record<ThemeName, ThemeConfig> = {
     { image: "/projects/project-dove.jpg", label: "CURRENT PROJECT · PERTH", title: "Project Dove", description: "Expressive geometry translated into coordinated façade assemblies.", detail: "Project Dove demonstrates how a distinctive architectural envelope depends on rigorous model control. Computational workflows help rationalise geometry while BIM coordination manages structure, brackets, panels and information through the delivery sequence." },
     { image: "/projects/women-babies-hospital.png", label: "CURRENT PROJECT · PERTH", title: "Women and Babies Hospital", description: "Major healthcare delivery with façade information under control.", detail: "Large healthcare projects demand reliable model governance across design, procurement and construction. The façade workflow brings LOD, LOI, metadata, interfaces and issue ownership together so decisions remain traceable and buildable.", wide: true },
   ], hobbies: DEFAULT_HOBBIES },
-  cinematic: { heroImageUrl: "/projects/atlassian-central-aerial.avif", portraitImageUrl: "/ehsan-mokhtary-portrait-Hotizontal.png", accentColor: "#ff4d00", heroLine1: "Geometry, directed.", heroLine2: "Delivery, resolved.", heroSubtitle: "I direct the digital systems behind complex facades—connecting design intent, coordination and fabrication in one controlled frame.", showParticles: false, showFloatingPanels: false, mediaRail: [], hobbies: DEFAULT_HOBBIES },
+  cinematic: { heroImageUrl: "/projects/atlassian-central-aerial.avif", portraitImageUrl: "/ehsan-mokhtary-portrait-Hotizontal.png", accentColor: "#8ff7dc", heroLine1: "Resolve the detail.", heroLine2: "Direct the system.", heroSubtitle: "Facade BIM leadership at the point where geometry, tolerance and construction reality meet—turning ambitious envelopes into coordinated, fabrication-ready systems.", showParticles: false, showFloatingPanels: false, mediaRail: [], hobbies: DEFAULT_HOBBIES },
 };
 const PROJECT_STORY_ORDER = ["Atlassian Central — façade in delivery", "Atlassian Central — climate envelope", "New Dunedin Hospital", "Project Dove", "Women and Babies Hospital"];
 const sortProjectStoriesFirst = (stories: MediaStory[]) => stories.sort((a, b) => {
@@ -211,7 +211,7 @@ export function HomePage() {
   const hobbyKeys = new Set(activeTheme.hobbies.flatMap((item) => [item.title.toLowerCase(), item.url.toLowerCase()]));
   const additionalProducts = products.filter((item) => !hobbyKeys.has((item.title || "").toLowerCase()) && !hobbyKeys.has((item.url || "").toLowerCase()));
 
-  return <div className={`site-shell theme-${theme} ${introComplete ? "page-ready" : "page-loading"} min-h-screen overflow-x-hidden text-[#deddd8]`} data-theme={theme} style={{ "--accent": activeTheme.accentColor, "--theme-hero": `url("${activeTheme.heroImageUrl}")` } as React.CSSProperties}>
+  return <div className={`site-shell theme-${theme} ${introComplete ? "page-ready" : "page-loading"} min-h-screen text-[#deddd8]`} data-theme={theme} style={{ "--accent": activeTheme.accentColor, "--theme-hero": `url("${activeTheme.heroImageUrl}")` } as React.CSSProperties}>
     <InteractionLayer />
     <div className="site-loader" role="status" aria-label="Loading portfolio" aria-hidden={introComplete}>
       <div className="loader-orbit"><i /><i /><i /><span>EM</span></div>
@@ -311,7 +311,7 @@ export function HomePage() {
     </div>
     <div className="theme-dock" role="group" aria-label="Choose website theme">
       <span>VIEW</span>
-      {([["technical","Technical"], ["apple","Editorial"], ["cinematic","Cinema"]] as [ThemeName,string][]).map(([value,label]) => <button type="button" className={theme === value ? "is-active" : ""} onClick={() => chooseTheme(value)} aria-pressed={theme === value} key={value}>{label}</button>)}
+      {([["technical","Technical"], ["apple","Editorial"], ["cinematic","Assembly"]] as [ThemeName,string][]).map(([value,label]) => <button type="button" className={theme === value ? "is-active" : ""} onClick={() => chooseTheme(value)} aria-pressed={theme === value} key={value}>{label}</button>)}
     </div>
     <AuthModal open={authOpen} initialMode={authMode} onClose={() => setAuthOpen(false)} />
   </div>;
