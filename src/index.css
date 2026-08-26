@@ -151,3 +151,8 @@ body { margin:0; min-height:100vh; font-family:var(--font-sans); background:#080
 .bracket-v3[data-phase="0"] .part-mullion,.bracket-v3[data-phase="0"] .part-slab,.bracket-v3[data-phase="1"] .part-slots,.bracket-v3[data-phase="2"] .part-j-bracket,.bracket-v3[data-phase="3"] .part-anchors{opacity:1;transform:none;border-color:#8ff7dc9c;box-shadow:0 8px 28px #000a,0 0 22px #8ff7dc13}
 .bracket-v3 .part-slots{top:24%;right:4%;bottom:auto;--leader:118px}.bracket-v3 .part-slots:before{transform:rotate(-10deg)}.bracket-v3 .part-slots:after{margin-top:17px}
 @media(max-width:900px){.bracket-v3 .part-slots{top:23%;right:3%;bottom:auto;--leader:64px}}
+
+/* Give the bracket inspection film more room and retain more source detail. */
+@media(min-width:901px){.bracket-v3{grid-template-columns:minmax(0,1.38fr) minmax(340px,.62fr)}.bracket-v3 .bracket-image-wrap{inset:3% 0 3% 1%}}
+.bracket-v3 .bracket-image-wrap video{filter:saturate(.94) contrast(1.04) brightness(.9)}
+.bracket-v3 .bracket-image-wrap:after{background:linear-gradient(90deg,#07100f0a,transparent 70%,#07100f52),linear-gradient(0deg,#07100f3d,transparent 34%)}

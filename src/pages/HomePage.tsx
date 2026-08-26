@@ -132,6 +132,14 @@ export function HomePage() {
     return () => window.clearTimeout(fallback);
   }, []);
   useEffect(() => {
+    if (!themeResolved || !isAdmin) return;
+    const previewTheme = new URLSearchParams(window.location.search).get("previewTheme");
+    if (previewTheme === "technical" || previewTheme === "apple" || previewTheme === "cinematic") {
+      setTheme(previewTheme);
+      setActiveStory(0);
+    }
+  }, [isAdmin, themeResolved]);
+  useEffect(() => {
     if (!themeResolved || !pageLoaded) return;
     const reveal = window.setTimeout(() => setIntroComplete(true), 650);
     return () => window.clearTimeout(reveal);
@@ -239,7 +247,7 @@ export function HomePage() {
           </div>
         </section>
 
-        {theme === "cinematic" && <CinematicScroll />}
+        <CinematicScroll />
 
         <section className="apple-showcase" aria-label="Featured visual stories">
           <div className="apple-rail-heading"><div><span>FEATURED</span><h2>Stories in design.</h2></div><div className="apple-rail-actions"><p>Explore the person, process and projects behind the models.</p><nav aria-label="Featured story controls"><button type="button" onClick={() => showStory(activeStory - 1)} aria-label="Previous story">←</button><span>{String(activeStory + 1).padStart(2, "0")} / {String(activeTheme.mediaRail.length).padStart(2, "0")}</span><button type="button" onClick={() => showStory(activeStory + 1)} aria-label="Next story">→</button></nav></div></div>
