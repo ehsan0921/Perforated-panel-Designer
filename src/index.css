@@ -156,3 +156,9 @@ body { margin:0; min-height:100vh; font-family:var(--font-sans); background:#080
 @media(min-width:901px){.bracket-v3{grid-template-columns:minmax(0,1.38fr) minmax(340px,.62fr)}.bracket-v3 .bracket-image-wrap{inset:3% 0 3% 1%}}
 .bracket-v3 .bracket-image-wrap video{filter:saturate(.94) contrast(1.04) brightness(.9)}
 .bracket-v3 .bracket-image-wrap:after{background:linear-gradient(90deg,#07100f0a,transparent 70%,#07100f52),linear-gradient(0deg,#07100f3d,transparent 34%)}
+
+/* High-legibility engineering labels over the 2K inspection film. */
+.bracket-v3 .part-label{gap:5px;padding:11px 13px;border-width:1px;background:#03110fec;box-shadow:0 10px 34px #000d;backdrop-filter:blur(16px)}
+.bracket-v3 .part-label strong{font-size:10px;line-height:1.15;letter-spacing:.09em}.bracket-v3 .part-label small{font-size:9px;line-height:1.35;color:#e8fffaad}.bracket-v3 .part-label:before{height:2px}.bracket-v3 .part-label:after{width:9px;height:9px;top:calc(50% - 4px)}
+.bracket-v3 .check-slab-plane span,.bracket-v3 .check-facade-datum span,.bracket-v3 .check-clearance span,.bracket-v3 .check-anchor-zone span,.bracket-v3 .check-rl span{font-size:9px;line-height:1.4}
+@media(max-width:900px){.bracket-v3 .part-label{padding:7px 8px}.bracket-v3 .part-label strong{font-size:8px}.bracket-v3 .part-label small{display:none}}

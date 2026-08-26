@@ -70,7 +70,7 @@ export function BracketLab() {
           <div className="bracket-halo" aria-hidden />
           <div className={`bracket-image-wrap${videoReady ? " is-video-ready" : ""}`}>
             <img src="/facade-j-bracket-higgsfield-v3.webp" alt="Galvanized façade J-bracket coordinated between an aluminium curtain-wall mullion and concrete slab edge" />
-            <video ref={videoRef} src="/facade-j-bracket-higgsfield-scrub.mp4" poster="/facade-j-bracket-higgsfield-v3.webp" muted playsInline preload="auto" tabIndex={-1} aria-hidden />
+            <video ref={videoRef} src="/facade-j-bracket-higgsfield-2k-v4.mp4" poster="/facade-j-bracket-higgsfield-v3.webp" muted playsInline preload="auto" tabIndex={-1} aria-hidden />
             <div className="bracket-part-labels" aria-hidden>
               <span className="part-label part-mullion"><strong>FAÇADE LINE CHECK — BIM</strong><small>Confirm grid line, set-out and façade offset</small></span>
               <span className="part-label part-j-bracket"><strong>BRACKET RL CHECK</strong><small>Verify bracket level against façade datum</small></span>
