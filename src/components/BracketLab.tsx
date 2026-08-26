@@ -1,5 +1,25 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
+type TrackPoint = readonly [progress: number, x: number, y: number];
+
+const anchorTracks: Record<string, readonly TrackPoint[]> = {
+  facade: [[0, .482, .18], [.2, .486, .18], [.4, .5, .17], [.6, .51, .15], [.8, .52, .12], [1, .53, .08]],
+  slab: [[0, .84, .79], [.2, .87, .8], [.4, .89, .81], [.6, .91, .83], [.8, .93, .85], [1, .95, .87]],
+  gap: [[0, .36, .74], [.2, .33, .74], [.4, .28, .72], [.6, .22, .7], [.8, .17, .66], [1, .13, .61]],
+  rl: [[0, .445, .31], [.2, .43, .28], [.4, .4, .25], [.6, .36, .18], [.8, .33, .13], [1, .3, .08]],
+  anchor: [[0, .65, .73], [.2, .65, .72], [.4, .66, .7], [.6, .67, .69], [.8, .68, .66], [1, .69, .63]],
+};
+
+const pointOnTrack = (track: readonly TrackPoint[], progress: number) => {
+  const nextIndex = track.findIndex(([at]) => at >= progress);
+  if (nextIndex <= 0) return track[0];
+  if (nextIndex === -1) return track[track.length - 1];
+  const previous = track[nextIndex - 1];
+  const next = track[nextIndex];
+  const mix = (progress - previous[0]) / Math.max(.0001, next[0] - previous[0]);
+  return [progress, previous[1] + (next[1] - previous[1]) * mix, previous[2] + (next[2] - previous[2]) * mix] as const;
+};
+
 const checks = [
   { id: "00", label: "FEDERATE", title: "Bring every interface into one model.", copy: "Concrete, façade, structure and the bracket zone are reviewed in the same coordinates before the slab geometry is released.", metric: "MODEL FEDERATED", focus: "federate" },
   { id: "01", label: "CLEARANCE", title: "Prove the slab-to-curtain-wall distance.", copy: "Measure the modelled slab edge to the curtain-wall datum, then compare actual clearance against the project minimum, installation tolerance and movement allowance.", metric: "ACTUAL ≥ REQUIRED", focus: "clearance" },
@@ -10,6 +30,7 @@ const checks = [
 export function BracketLab() {
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const imageWrapRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef(0);
   const [active, setActive] = useState(0);
@@ -25,6 +46,23 @@ export function BracketLab() {
       const travel = Math.max(1, section.offsetHeight - window.innerHeight);
       const progress = Math.min(1, Math.max(0, -rect.top / travel));
       section.style.setProperty("--bracket-progress", progress.toFixed(4));
+      const imageWrap = imageWrapRef.current;
+      if (imageWrap && imageWrap.clientWidth > 0 && imageWrap.clientHeight > 0) {
+        const sourceWidth = video?.videoWidth || 2560;
+        const sourceHeight = video?.videoHeight || 1440;
+        const frameWidth = imageWrap.clientWidth;
+        const frameHeight = imageWrap.clientHeight;
+        const scale = Math.max(frameWidth / sourceWidth, frameHeight / sourceHeight);
+        const renderedWidth = sourceWidth * scale;
+        const renderedHeight = sourceHeight * scale;
+        Object.entries(anchorTracks).forEach(([name, track]) => {
+          const [, x, y] = pointOnTrack(track, progress);
+          const mappedX = ((x * renderedWidth - (renderedWidth - frameWidth) / 2) / frameWidth) * 100;
+          const mappedY = ((y * renderedHeight - (renderedHeight - frameHeight) / 2) / frameHeight) * 100;
+          imageWrap.style.setProperty(`--${name}-x`, `${Math.min(96, Math.max(4, mappedX)).toFixed(2)}%`);
+          imageWrap.style.setProperty(`--${name}-y`, `${Math.min(94, Math.max(6, mappedY)).toFixed(2)}%`);
+        });
+      }
       setActive(Math.min(checks.length - 1, Math.floor(progress * checks.length)));
       if (video && !reducedMotion.matches && Number.isFinite(video.duration) && video.duration > 0 && !video.seeking) {
         const targetTime = progress * Math.max(0, video.duration - 0.04);
@@ -68,15 +106,15 @@ export function BracketLab() {
         <div className="bracket-grid" aria-hidden />
         <div className="bracket-visual">
           <div className="bracket-halo" aria-hidden />
-          <div className={`bracket-image-wrap${videoReady ? " is-video-ready" : ""}`}>
+          <div ref={imageWrapRef} className={`bracket-image-wrap${videoReady ? " is-video-ready" : ""}`}>
             <img src="/facade-j-bracket-higgsfield-v3.webp" alt="Galvanized façade J-bracket coordinated between an aluminium curtain-wall mullion and concrete slab edge" />
             <video ref={videoRef} src="/facade-j-bracket-higgsfield-2k-v4.mp4" poster="/facade-j-bracket-higgsfield-v3.webp" muted playsInline preload="auto" tabIndex={-1} aria-hidden />
-            <div className="bracket-part-labels" aria-hidden>
-              <span className="part-label part-mullion"><strong>FAÇADE LINE CHECK — BIM</strong><small>Confirm grid line, set-out and façade offset</small></span>
-              <span className="part-label part-j-bracket"><strong>BRACKET RL CHECK</strong><small>Verify bracket level against façade datum</small></span>
-              <span className="part-label part-slots"><strong>FAÇADE–SLAB GAP CHECK</strong><small>Actual gap ≥ required clearance</small></span>
-              <span className="part-label part-anchors"><strong>BOLT DISTANCE CHECK</strong><small>Verify centres, edge distance and access</small></span>
-              <span className="part-label part-slab"><strong>SLAB CHECK — BIM MODEL</strong><small>Confirm slab-edge profile and projection</small></span>
+            <div className="tracked-callouts" aria-hidden>
+              <span className="tracked-callout callout-facade"><i /><span><b>01 / BIM DATUM</b><strong>Façade line check</strong><small>Grid, set-out + offset aligned</small><em>TRACKING</em></span></span>
+              <span className="tracked-callout callout-slab"><i /><span><b>02 / MODEL EDGE</b><strong>Slab edge check</strong><small>Profile + projection verified</small><em>ALIGNED</em></span></span>
+              <span className="tracked-callout callout-gap is-amber"><i /><span><b>03 / CLEARANCE</b><strong>Façade-to-slab gap</strong><small>Actual gap ≥ required gap</small><em>PASS</em></span></span>
+              <span className="tracked-callout callout-rl"><i /><span><b>04 / LEVEL</b><strong>Bracket RL check</strong><small>RL matched to façade datum</small><em>VERIFIED</em></span></span>
+              <span className="tracked-callout callout-anchor is-amber"><i /><span><b>05 / ANCHORS</b><strong>Bolt distance check</strong><small>Centres, edge distance + access</small><em>PASS</em></span></span>
             </div>
           </div>
           <div className="check-slab-plane" aria-hidden><span>TOP OF SLAB / RL DATUM</span></div>
