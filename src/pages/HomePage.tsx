@@ -80,7 +80,7 @@ export function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [projects, setProjects] = useState<PortfolioProject[]>(WORK);
   const [phone, setPhone] = useState<string | null>(null);
-  const [theme, setTheme] = useState<ThemeName>("apple");
+  const [theme, setTheme] = useState<ThemeName>("technical");
   const [themes, setThemes] = useState<Record<ThemeName, ThemeConfig>>(DEFAULT_THEMES);
   const [activeStory, setActiveStory] = useState(0);
   const [themeResolved, setThemeResolved] = useState(false);
@@ -116,8 +116,8 @@ export function HomePage() {
       savedTechnical.hobbies = (savedTechnical.hobbies || []).filter((item) => item.title !== "Gym Records");
       savedApple.hobbies = (savedApple.hobbies || []).filter((item) => item.title !== "Gym Records");
       setThemes({ technical: savedTechnical, apple: savedApple, cinematic: DEFAULT_THEMES.cinematic });
-      const localTheme = window.localStorage.getItem("em-theme");
-      setTheme(localTheme === "technical" || localTheme === "apple" || localTheme === "cinematic" ? localTheme : "cinematic");
+      const defaultTheme = data.activeTheme;
+      setTheme(defaultTheme === "technical" || defaultTheme === "apple" || defaultTheme === "cinematic" ? defaultTheme : "technical");
     }).catch(() => undefined).finally(() => setThemeResolved(true));
   }, []);
   useEffect(() => {
@@ -165,11 +165,6 @@ export function HomePage() {
     window.open(url, "_blank", "noopener,noreferrer");
   };
   const activeTheme = themes[theme];
-  const chooseTheme = (next: ThemeName) => {
-    setTheme(next);
-    setActiveStory(0);
-    window.localStorage.setItem("em-theme", next);
-  };
   const scrollStoryRail = useCallback((index: number) => {
     const rail = mediaRailRef.current;
     const firstSet = rail?.firstElementChild as HTMLElement | null;
@@ -308,10 +303,6 @@ export function HomePage() {
         <section id="contact" className="contact-zone border border-white/10 px-5 py-24 text-center sm:px-10 lg:px-16 lg:py-40"><Reveal><p className="section-index">HAVE A COMPLEX FACADE?</p><h2>Let’s make it<br /><span>clear, coordinated, buildable.</span></h2><div className="mt-10 flex flex-wrap justify-center gap-3"><a className="button-primary" href={`mailto:${EMAIL}`}>Start a conversation ↗</a>{phone ? <a className="button-ghost phone-revealed" href={`tel:${phone}`}>{phone} <span>CALL ↗</span></a> : <button className="button-ghost" type="button" onClick={revealPhone}>Reveal phone <span>CLICK ↗</span></button>}<a className="button-ghost" href={LINKEDIN} target="_blank" rel="noreferrer">LinkedIn</a></div><p className="phone-note">Phone number is protected and only loaded after you click.</p></Reveal></section>
       </main>
       <footer className="flex flex-col gap-4 border-x border-white/10 px-6 py-8 text-[11px] tracking-[.16em] text-white/35 sm:flex-row sm:justify-between"><span>© {new Date().getFullYear()} EHSAN MOKHTARY</span><span>FACADE BIM / COMPUTATION / DELIVERY</span><span>MELBOURNE, AU</span></footer>
-    </div>
-    <div className="theme-dock" role="group" aria-label="Choose website theme">
-      <span>VIEW</span>
-      {([["technical","Technical"], ["apple","Editorial"], ["cinematic","Assembly"]] as [ThemeName,string][]).map(([value,label]) => <button type="button" className={theme === value ? "is-active" : ""} onClick={() => chooseTheme(value)} aria-pressed={theme === value} key={value}>{label}</button>)}
     </div>
     <AuthModal open={authOpen} initialMode={authMode} onClose={() => setAuthOpen(false)} />
   </div>;
